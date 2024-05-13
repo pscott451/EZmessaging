@@ -79,7 +79,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "0.0.4"
+            version = "0.0.6"
         }
     }
 }
