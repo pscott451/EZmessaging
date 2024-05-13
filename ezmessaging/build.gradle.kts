@@ -77,9 +77,9 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "0.0.4"
+            groupId = "com.scott.ezmessaging"
+            artifactId = "ezmessaging"
+            version = "0.0.5"
         }
     }
 }
