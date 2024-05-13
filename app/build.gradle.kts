@@ -114,3 +114,13 @@ dependencies {
     api(libs.sharedtest.kotest.core)
     api(libs.sharedtest.kotest.shared)
 }
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.github.pscott451"
+            artifactId = "EZmessaging"
+            version = "0.0.6"
+        }
+    }
+}
