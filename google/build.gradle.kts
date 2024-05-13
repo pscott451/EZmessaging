@@ -1,7 +1,6 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.androidLibrary)
-    `maven-publish`
 }
 
 android {
@@ -32,14 +31,4 @@ android {
 dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.urlconnection)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "0.0.6"
-        }
-    }
 }

@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinKapt)
     alias(libs.plugins.hilt)
     alias(libs.plugins.junit5)
-    `maven-publish`
 }
 
 android {
@@ -113,14 +112,4 @@ dependencies {
     api(libs.sharedtest.kotest.api)
     api(libs.sharedtest.kotest.core)
     api(libs.sharedtest.kotest.shared)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "0.0.6"
-        }
-    }
 }
