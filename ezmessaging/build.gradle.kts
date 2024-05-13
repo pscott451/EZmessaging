@@ -33,13 +33,6 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-    publishing {
-        multipleVariants {
-            withSourcesJar()
-            withJavadocJar()
-            allVariants()
-        }
-    }
 }
 
 dependencies {
@@ -79,14 +72,4 @@ dependencies {
     api(libs.sharedtest.kotest.api)
     api(libs.sharedtest.kotest.core)
     api(libs.sharedtest.kotest.shared)
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "0.0.8"
-        }
-    }
 }
