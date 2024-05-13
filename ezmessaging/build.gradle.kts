@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinKapt)
     alias(libs.plugins.hilt)
     alias(libs.plugins.junit5)
+    `maven-publish`
 }
 
 android {
