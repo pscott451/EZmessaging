@@ -22,4 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "EZmessaging"
 include(":app")
 include(":ezmessaging")
-include(":google")
+//include(":google")

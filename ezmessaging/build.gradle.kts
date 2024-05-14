@@ -41,10 +41,11 @@ android {
             }
         }
     }
+    useLibrary("org.apache.http.legacy")
 }
 
 dependencies {
-    implementation(project(":google"))
+    //implementation(project(":google"))
 
     // Android Core
     implementation(libs.androidx.core.ktx)
@@ -53,6 +54,10 @@ dependencies {
     // Hilt
     kapt(libs.hilt.compiler)
     implementation(libs.hilt)
+
+    // OKHttp
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.urlconnection)
 
     // Unit Test
     testImplementation(libs.test.turbine)
@@ -87,7 +92,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "1.0.0"
+            version = "1.0.3"
 
             afterEvaluate {
                 from(components["release"])
