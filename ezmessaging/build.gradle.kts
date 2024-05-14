@@ -85,9 +85,9 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = libs.material
+            groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "0.0.1"
+            version = "1.0.0"
 
             afterEvaluate {
                 from(components["release"])
