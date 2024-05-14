@@ -8,3 +8,7 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.junit5) apply false
 }
+
+val publishGroup by extra { "com.github.pscott451" }
+val publishArtifactID by extra { "EZmessaging" }
+val publishVersion by extra { "1.0.2" }

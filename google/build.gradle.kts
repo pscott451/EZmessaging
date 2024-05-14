@@ -4,6 +4,10 @@ plugins {
     `maven-publish`
 }
 
+val publishGroup: String by rootProject.extra
+val publishArtifactID: String by rootProject.extra
+val publishVersion: String by rootProject.extra
+
 android {
     namespace = "com.scott.google"
     compileSdk = 34
@@ -46,9 +50,9 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "0.0.1"
+            groupId = publishGroup
+            artifactId = publishArtifactID
+            version = publishVersion
 
             afterEvaluate {
                 from(components["release"])
