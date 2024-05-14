@@ -1,4 +1,4 @@
-package com.scott.ezmessaging.ui.theme
+package com.scott.app.ui.theme
 
 import android.app.Activity
 import android.os.Build

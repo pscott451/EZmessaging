@@ -1,4 +1,4 @@
-package com.scott.ezmessaging.ui.theme
+package com.scott.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

@@ -1,4 +1,4 @@
-package com.scott.ezmessaging
+package com.scott.app
 
 import org.junit.Test
 

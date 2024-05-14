@@ -1,6 +1,7 @@
-package com.scott.ezmessaging.receiver
+package com.scott.app.receiver
 
 import com.scott.ezmessaging.model.Message
+import com.scott.ezmessaging.receiver.MmsReceivedBroadcastReceiver
 
 internal class MmsReceiver: MmsReceivedBroadcastReceiver() {
 

@@ -1,4 +1,4 @@
-package com.scott.ezmessaging.domain
+package com.scott.app.domain
 
 import android.Manifest
 import android.content.Context

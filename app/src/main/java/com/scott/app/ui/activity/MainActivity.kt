@@ -1,4 +1,4 @@
-package com.scott.ezmessaging.ui.activity
+package com.scott.app.ui.activity
 
 import androidx.activity.ComponentActivity
 

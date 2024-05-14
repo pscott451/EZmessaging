@@ -1,8 +1,10 @@
-package com.scott.ezmessaging.ui.activity
+package com.scott.app.ui.activity
 
+import com.scott.app.R
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -19,22 +21,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import com.scott.ezmessaging.domain.RequestPermissionsUseCase
+import com.scott.app.domain.RequestPermissionsUseCase
 import com.scott.ezmessaging.manager.ContentManager
 import com.scott.ezmessaging.manager.DeviceManager
 import com.scott.ezmessaging.model.Initializable
-import com.scott.ezmessaging.model.MessageData
-import com.scott.ezmessaging.receiver.SmsSendCallbacks
-import com.scott.ezmessaging.ui.theme.EZmessagingTheme
-import com.scott.ezmessaging.viewmodel.SetupViewModel
-import com.scott.ezmessaging.viewmodel.SetupViewModel.SetupState
+import com.scott.app.ui.theme.EZmessagingTheme
+import com.scott.app.viewmodel.SetupViewModel
+import com.scott.app.viewmodel.SetupViewModel.SetupState
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class SetupActivity: ComponentActivity() {
@@ -97,7 +96,7 @@ class SetupActivity: ComponentActivity() {
                             }
                         }
                         SetupState.Ready -> {
-                            sendMessage()
+                            initDeviceManager()
                         }
                         is SetupState.Error -> {
                             Text(text = "Something bad happened!")
@@ -108,33 +107,31 @@ class SetupActivity: ComponentActivity() {
         }
     }
 
-    private fun sendMessage() {
+    @SuppressLint("MissingPermission")
+    private fun initDeviceManager() {
         deviceManager.initializedState.onEach {
             if (it is Initializable.Initialized) {
-               /* contentManager.sendMmsMessage(
-                    MessageData.Text("Hellooo"), arrayOf("3077605312"))*/
-                contentManager.sendSmsMessage(
-                    address = "3077605312",
-                    text = "11 sms message",
-                    onSent = { isSuccess ->
-                        println("testingg sms sent 1: $isSuccess")
-                    },
-                    onDelivered = { isSuccess ->
-                        println("testingg sms delivered 1: $isSuccess")
-                    }
-                )
-                    /*object : SmsSendCallbacks.SendSmsListener {
-                    override fun onSent(isSuccess: Boolean) {
-                        println("tesitngg sms sent: $isSuccess")
-                    }
-
-                    override fun onDelivered(isSuccess: Boolean) {
-                        println("testingg sms delivered: $isSuccess")
-                    }
-                })*/
+                sendSmsMessage()
             }
         }.launchIn(lifecycleScope)
         deviceManager.initialize()
+    }
+
+    private fun sendSmsMessage() {
+        contentManager.sendSmsMessage(
+            address = "3077605312",
+            text = "11 sms message",
+            onSent = { isSuccess ->
+                println("testingg sms sent 1: $isSuccess")
+            },
+            onDelivered = { isSuccess ->
+                println("testingg sms delivered 1: $isSuccess")
+            }
+        )
+    }
+
+    private fun sendMmsMessage() {
+        val bm = BitmapFactory.decodeResource(resources, R.drawable.kevin)
     }
 
     private fun isDefaultMessagingApp() = Telephony.Sms.getDefaultSmsPackage(this) == packageName
