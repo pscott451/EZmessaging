@@ -34,10 +34,11 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
     publishing {
-        multipleVariants {
-            withSourcesJar()
-            withJavadocJar()
-            allVariants()
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+                withJavadocJar()
+            }
         }
     }
 }
@@ -86,7 +87,11 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "0.0.10"
+            version = "0.0.11"
+
+            afterEvaluate {
+                from(components["release"])
+            }
         }
     }
 }
