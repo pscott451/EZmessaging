@@ -1,6 +1,7 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     alias(libs.plugins.androidLibrary)
+    `maven-publish`
 }
 
 android {
@@ -26,9 +27,32 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     useLibrary("org.apache.http.legacy")
+
+    publishing {
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+                withJavadocJar()
+            }
+        }
+    }
 }
 
 dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.urlconnection)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.github.pscott451"
+            artifactId = "EZmessaging"
+            version = "0.0.1"
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }
