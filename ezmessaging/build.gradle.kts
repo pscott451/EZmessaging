@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.jetbrainsKotlinKapt)
     alias(libs.plugins.hilt)
     alias(libs.plugins.junit5)
+    `maven-publish`
 }
 
 android {
@@ -31,6 +32,14 @@ android {
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+    publishing {
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+                withJavadocJar()
+            }
+        }
     }
 }
 
@@ -71,4 +80,18 @@ dependencies {
     api(libs.sharedtest.kotest.api)
     api(libs.sharedtest.kotest.core)
     api(libs.sharedtest.kotest.shared)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = libs.material
+            artifactId = "EZmessaging"
+            version = "0.0.1"
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }
