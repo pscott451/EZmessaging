@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-abstract class MmsBroadcastReceiver : BroadcastReceiver() {
+abstract class SmsReceivedBroadcastReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var dispatcherProvider: DispatcherProvider

@@ -52,9 +52,17 @@ interface ContentManager {
 
     /**
      * Sends an sms message.
-     * @return the [SmsMessage] if it was successfully sent and inserted into the database. null, otherwise.
+     * @param address the recipient address.
+     * @param text the text.
+     * @param onSent invoked with true if the message was successfully sent.
+     * @param onDelivered invoked with false if the message was successfully delivered to the recipient.
      */
-    fun sendSmsMessage(address: String, text: String, threadId: String): SmsMessage?
+    fun sendSmsMessage(
+        address: String,
+        text: String,
+        onSent: (Boolean) -> Unit,
+        onDelivered: (Boolean) -> Unit
+    )
 
     /**
      * Sends an mms message.

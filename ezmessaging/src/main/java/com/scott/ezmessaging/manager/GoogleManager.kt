@@ -280,7 +280,7 @@ internal class GoogleManager @Inject constructor(
             )
 
             val writerUri = Uri.Builder()
-                .authority(MmsFileProvider.AUTHORITY)
+                .authority(MmsFileProvider.getAuthority(context))
                 .path(fileName)
                 .scheme(ContentResolver.SCHEME_CONTENT)
                 .build()

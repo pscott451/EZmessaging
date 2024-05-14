@@ -6,6 +6,8 @@ import com.scott.ezmessaging.contentresolver.SmsContentResolver
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.SmsMessage
 import com.scott.ezmessaging.provider.DispatcherProvider
+import com.scott.ezmessaging.receiver.SmsDeliveredBroadcastReceiver
+import com.scott.ezmessaging.receiver.SmsSentBroadcastReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -20,9 +22,9 @@ import kotlin.coroutines.suspendCoroutine
  */
 @Singleton
 internal class SmsManager @Inject constructor(
-    @ApplicationContext context: Context,
+    @ApplicationContext private val context: Context,
+    private val smsContentResolver: SmsContentResolver,
     dispatcherProvider: DispatcherProvider,
-    private val smsContentResolver: SmsContentResolver
 ) {
 
     private val systemSmsManager = context.getSystemService(SmsManager::class.java)
@@ -65,12 +67,21 @@ internal class SmsManager @Inject constructor(
     }
 
     /**
-     * Sends an SMS message to another device and inserts the value into the content resolver and database.
-     *  @return the [SmsMessage] if it was successfully sent and inserted into the database. null, if it fails.
+     * Sends an SMS message to another device and inserts the value into the content resolver.
      */
-    fun sendMessage(address: String, text: String, threadId: String): SmsMessage? {
-        systemSmsManager.sendTextMessage(address, null, text, null, null)
-        return smsContentResolver.insertSentMessage(address, text, threadId)
+    fun sendMessage(
+        address: String,
+        text: String,
+        onSent: (Boolean) -> Unit,
+        onDelivered: (Boolean) -> Unit
+    ) {
+        val insertedMessage = smsContentResolver.insertSentMessage(address, text)
+        val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
+        val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
+            onDelivered.invoke(isSuccess)
+            if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
+        }
+        systemSmsManager.sendTextMessage(address, null, text, sentIntent, deliveredIntent)
     }
 
     /**
@@ -87,5 +98,14 @@ internal class SmsManager @Inject constructor(
      */
     fun deleteMessage(messageId: String): Boolean {
         return smsContentResolver.deleteMessage(messageId)
+    }
+
+    /**
+     * Marks a message as successfully delivered.
+     */
+    private fun markMessageAsDelivered(messageId: String?) {
+        messageId?.let {
+            smsContentResolver.markMessageAsDelivered(messageId)
+        }
     }
 }

@@ -69,8 +69,11 @@ internal class ContentManagerImpl(
     override fun sendSmsMessage(
         address: String,
         text: String,
-        threadId: String
-    ) = smsManager.sendMessage(address, text, threadId)
+        onSent: (Boolean) -> Unit,
+        onDelivered: (Boolean) -> Unit
+    ) {
+        smsManager.sendMessage(address, text, onSent, onDelivered)
+    }
 
     override suspend fun sendMmsMessage(
         message: MessageData,

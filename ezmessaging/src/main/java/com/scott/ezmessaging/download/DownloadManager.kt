@@ -46,7 +46,7 @@ internal class DownloadManager @Inject constructor(
         val mDownloadFile = File(context.cacheDir, fileName)
 
         val contentUri = Uri.Builder()
-            .authority(MmsFileProvider.AUTHORITY)
+            .authority(MmsFileProvider.getAuthority(context))
             .path(fileName)
             .scheme(ContentResolver.SCHEME_CONTENT)
             .build()
@@ -84,7 +84,7 @@ internal class DownloadManager @Inject constructor(
 
     private fun grantUriPermission(context: Context, contentUri: Uri) {
         context.grantUriPermission(
-            MmsFileProvider.AUTHORITY,
+            MmsFileProvider.getAuthority(context),
             contentUri,
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )

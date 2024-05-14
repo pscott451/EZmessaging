@@ -2,6 +2,7 @@ package com.scott.ezmessaging.receiver
 
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -43,6 +44,6 @@ internal class MmsFileProvider : ContentProvider() {
     }
 
     companion object {
-        const val AUTHORITY = "com.scott.ezmessaging.receiver.MmsFileProvider"
+        fun getAuthority(context: Context) = "${context.packageName}.MmsFileProvider"
     }
 }

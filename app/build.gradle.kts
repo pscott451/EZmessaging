@@ -50,6 +50,7 @@ android {
 
 dependencies {
     implementation(project(":ezmessaging"))
+    //implementation("com.github.pscott451:EZmessaging:1.0.3")
 
     // Android Core
     implementation(libs.androidx.core.ktx)

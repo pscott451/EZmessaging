@@ -337,8 +337,6 @@ internal class MmsContentResolver @Inject constructor(
         metadataMap.values.forEach { metadataMessages ->
             messages.addAll(metadataMessages.mapNotNull { it.toMessage() })
         }
-        val message = messages.find { it.messageId == "47001" }
-        println("testingg found message: $message")
         return messages
     }
 

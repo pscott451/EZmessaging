@@ -128,17 +128,16 @@ internal class SmsContentResolver @Inject constructor(
 
     /**
      * Inserts a message.
-     * The system handles creating all of the other details about the message (e.g. hasBeenRead, messageId, etc.)
+     * The system handles creating all of the other details about the message (e.g. hasBeenRead, messageId, threadId, etc.)
      * @return the inserted message. null, if the insert fails.
      */
-    fun insertSentMessage(address: String, body: String, threadId: String): SmsMessage? {
+    fun insertSentMessage(address: String, body: String): SmsMessage? {
         var insertedMessage: SmsMessage? = null
         runCatching {
             val dateSent = System.currentTimeMillis()
             contentResolver?.insert(Uri.parse(CONTENT_SMS_OUTBOX), ContentValues().apply {
                 put(COLUMN_SMS_BODY, body)
                 put(COLUMN_SMS_ADDRESS, address)
-                put(COLUMN_SMS_THREAD_ID, threadId)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
             insertedMessage = findMessages(CONTENT_SMS_OUTBOX, body, dateSent).first()
@@ -174,6 +173,17 @@ internal class SmsContentResolver @Inject constructor(
             put(COLUMN_SMS_HAS_BEEN_READ, 1)
         }
         return updateMessages(messageId, CONTENT_SMS_INBOX, updates)
+    }
+
+    /**
+     * Marks a message with the provided [messageId] as delivered.
+     * @return true if the message was successfully updated.
+     */
+    fun markMessageAsDelivered(messageId: String): Boolean {
+        val updates = ContentValues().apply {
+            put(COLUMN_SMS_DELIVERY_DATE, System.currentTimeMillis())
+        }
+        return updateMessages(messageId, CONTENT_SMS_OUTBOX, updates)
     }
 
     /**
@@ -272,6 +282,7 @@ internal class SmsContentResolver @Inject constructor(
         private const val COLUMN_SMS_DATE_SENT = "date_sent"
         private const val COLUMN_SMS_DATE_RECEIVED = "date" // If this was an outgoing message (coming from me), this represents the sent time.
         private const val COLUMN_SMS_HAS_BEEN_READ = "read"
+        private const val COLUMN_SMS_DELIVERY_DATE = "delivery_date"
         private const val COLUMN_SMS_BODY = "body"
     }
 }
