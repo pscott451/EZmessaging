@@ -1,9 +1,9 @@
 package com.scott.app.receiver
 
 import com.scott.ezmessaging.model.Message
-import com.scott.ezmessaging.receiver.MmsReceivedBroadcastReceiver
+import com.scott.ezmessaging.receiver.MessageReceivedBroadcastReceiver
 
-internal class MmsReceiver: MmsReceivedBroadcastReceiver() {
+internal class MmsReceiver: MessageReceivedBroadcastReceiver() {
 
     override fun onMessageReceived(message: Message) {
         println("testingg on mms message received: $message")

@@ -13,6 +13,7 @@ import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.convertDateToMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
+import com.scott.ezmessaging.extension.printAllColumns
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
 import com.scott.ezmessaging.manager.DeviceManager
@@ -194,13 +195,13 @@ internal class MmsContentResolver @Inject constructor(
         if (columnFilters == "") return messageIdToMetaData
         contentResolver.getCursor(
             uri = Uri.parse(CONTENT_MMS_ALL),
-            columnsToReturn = arrayOf(
+            columnsToReturn = /*arrayOf(
                 COLUMN_MMS_ID,
                 COLUMN_MMS_THREAD_ID,
                 COLUMN_MMS_DATE_SENT,
                 COLUMN_MMS_DATE,
                 COLUMN_MMS_HAS_BEEN_READ
-            ),
+            )*/null,
             columnFilters
         )?.let { cursor ->
             while (cursor.moveToNext()) {
@@ -216,6 +217,19 @@ internal class MmsContentResolver @Inject constructor(
                     dateReceived = dateReceived,
                     hasBeenRead = hasBeenRead
                 )
+                dateReceived?.toLong()?.let {
+                    if (it in 1715737629..1715737705) {
+                        println()
+                    }
+                }
+                id?.let {
+                    if (it.toLong() > 47169) {
+                        println()
+                    }
+                }
+                if (id == "47185" || id == "47187") {
+                    cursor.printAllColumns()
+                }
                 id?.let {
                     messageIdToMetaData[it]?.add(metaData) ?: run {
                         messageIdToMetaData[it] = arrayListOf(metaData)
@@ -237,17 +251,20 @@ internal class MmsContentResolver @Inject constructor(
         if (columnFilters == "") return messageIdToAddresses
         contentResolver.getCursor(
             uri = Uri.parse(CONTENT_MMS_ADDRESS),
-            columnsToReturn = arrayOf(
+            columnsToReturn = /*arrayOf(
                 COLUMN_MMS_ADDRESS,
                 COLUMN_MMS_PARTICIPANT_TYPE,
                 COLUMN_MMS_MESSAGE_ID
-            ),
+            )*/null,
             columnFilters
         )?.let { cursor ->
             while (cursor.moveToNext()) {
                 val msgId = cursor.getColumnValue(COLUMN_MMS_MESSAGE_ID)
                 val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS)
                 val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address else null
+                if (msgId == "47185" || msgId == "47187") {
+                    cursor.printAllColumns()
+                }
                 msgId?.let { id ->
                     messageIdToAddresses[id]?.let {
                         if (it.senderAddress == null) {
@@ -277,13 +294,13 @@ internal class MmsContentResolver @Inject constructor(
         if (columnFilters == "") return messageIdToContent
         contentResolver.getCursor(
             uri = Uri.parse(CONTENT_MMS_BODY),
-            columnsToReturn = arrayOf(
+            columnsToReturn = /*arrayOf(
                 COLUMN_MMS_TEXT,
                 COLUMN_MMS_DATA,
                 COLUMN_MMS_CT,
                 COLUMN_MMS_MID,
                 COLUMN_MMS_ID
-            ),
+            )*/null,
             columnFilters
         )?.let { cursor ->
             while (cursor.moveToNext()) {
@@ -291,6 +308,9 @@ internal class MmsContentResolver @Inject constructor(
                 val uniqueId = cursor.getColumnValue(COLUMN_MMS_ID)
                 val type = cursor.getColumnValue(COLUMN_MMS_CT)
                 val text = cursor.getColumnValue(COLUMN_MMS_TEXT)
+                if (mid == "47185" || mid == "47187") {
+                    cursor.printAllColumns()
+                }
                 if (mid != null && type.isValidMessageType()) {
                     messageIdToContent[mid]?.let {
                         it.id = uniqueId

@@ -7,10 +7,13 @@ import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.model.Message.SmsMessage
 import com.scott.ezmessaging.model.MessageData
+import com.scott.ezmessaging.model.MessageReceiveResult
+import com.scott.ezmessaging.model.MessageSendResult
 import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Responsible for managing all sms and mms messages.
+ * Sending and receiving operations switch to the IO dispatcher but will always resume on main.
  */
 interface ContentManager {
 
@@ -44,11 +47,13 @@ interface ContentManager {
 
     /**
      * Handles receiving both SMS and MMS messages.
-     * @return the list of [Message] that was successfully received.
-     * The list may contain null values if there was an error receiving the messages.
-     * If the list was empty, it indicates the received message was neither sms or mms.
+     * @param intent the intent received from the broadcast.
+     * @param onReceiveResult invoked with a [MessageReceiveResult] when completed.
      */
-    suspend fun receiveMessage(intent: Intent): List<Message?>
+    fun receiveMessage(
+        intent: Intent,
+        onReceiveResult: (MessageReceiveResult) -> Unit
+    )
 
     /**
      * Sends an sms message.
@@ -60,18 +65,21 @@ interface ContentManager {
     fun sendSmsMessage(
         address: String,
         text: String,
-        onSent: (Boolean) -> Unit,
+        onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     )
 
     /**
      * Sends an mms message.
-     * @return the [MmsMessage] if it was successfully sent and inserted into the database. null, otherwise.
+     * @param message The [MessageData] to send.
+     * @param recipients a list of recipients.
+     * @param onSent invoked with true if the message was successfully sent.
      */
-    suspend fun sendMmsMessage(
+    fun sendMmsMessage(
         message: MessageData,
-        recipients: Array<String>
-    ): MmsMessage?
+        recipients: Array<String>,
+        onSent: (MessageSendResult) -> Unit
+    )
 
     /**
      * @return a list of messages, SMS and MMS, that match the provided params, if they exist.

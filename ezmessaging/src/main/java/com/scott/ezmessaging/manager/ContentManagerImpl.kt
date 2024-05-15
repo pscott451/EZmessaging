@@ -5,18 +5,19 @@ import android.content.Intent
 import android.provider.Telephony
 import android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION
 import android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION
-import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.google.android.mms.ContentType
-import com.scott.ezmessaging.BuildConfig
 import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.model.Initializable
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.model.Message.SmsMessage
 import com.scott.ezmessaging.model.MessageData
+import com.scott.ezmessaging.model.MessageReceiveResult
+import com.scott.ezmessaging.model.MessageSendResult
 import com.scott.ezmessaging.provider.DispatcherProvider
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,31 +55,54 @@ internal class ContentManagerImpl(
         }
     }
 
-    override suspend fun receiveMessage(intent: Intent) =
-        when {
-            intent.isSms() -> receiveSmsMessage(intent)
-            intent.isMms() -> receiveMmsMessage(intent)
-            else -> {
-                if (BuildConfig.DEBUG) {
-                    Log.e(ContentManagerImpl::class.simpleName, "Received an unknown message type.")
+    override fun receiveMessage(
+        intent: Intent,
+        onReceiveResult: (MessageReceiveResult) -> Unit
+    ) {
+        coroutineScope.launch {
+            when {
+                intent.isSms() -> receiveSmsMessage(intent) {
+                    resumeOnMainThread { onReceiveResult(it) }
                 }
-                emptyList()
+                intent.isMms() -> receiveMmsMessage(intent)  {
+                    resumeOnMainThread { onReceiveResult(it) }
+                }
+                else -> resumeOnMainThread {
+                    onReceiveResult(MessageReceiveResult.Failed("The received intent was neither sms or mms"))
+                }
             }
         }
+    }
 
     override fun sendSmsMessage(
         address: String,
         text: String,
-        onSent: (Boolean) -> Unit,
+        onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
-        smsManager.sendMessage(address, text, onSent, onDelivered)
+        coroutineScope.launch {
+            smsManager.sendMessage(
+                address = address,
+                text = text,
+                onSent = { resumeOnMainThread { onSent(it) } },
+                onDelivered = { resumeOnMainThread { onDelivered(it) } }
+            )
+        }
     }
 
-    override suspend fun sendMmsMessage(
+    override fun sendMmsMessage(
         message: MessageData,
-        recipients: Array<String>
-    ) = mmsManager.sendMessage(message, recipients)
+        recipients: Array<String>,
+        onSent: (MessageSendResult) -> Unit
+    ) {
+        coroutineScope.launch {
+            mmsManager.sendMessage(
+                message = message,
+                recipients = recipients,
+                onSent = { resumeOnMainThread { onSent(it) } }
+            )
+        }
+    }
 
     override fun markMessageAsRead(message: Message) =
         when (message) {
@@ -94,34 +118,42 @@ internal class ContentManagerImpl(
 
     override suspend fun getMessagesByParams(
         text: String?,
-        afterDateMillis: Long?
-    ): List<Message> {
-        val mmsMessages = mmsManager.findMessages(text = text, afterDateMillis = afterDateMillis)
-        val smsMessages = smsManager.findMessages(text = text, afterDateMillis = afterDateMillis)
-        return mmsMessages + smsMessages
+        afterDateMillis: Long?,
+    ): List<Message>  = suspendCoroutine { continuation ->
+        coroutineScope.launch {
+            val mmsMessages = async { mmsManager.findMessages(text = text, afterDateMillis = afterDateMillis) }
+            val smsMessages = async { smsManager.findMessages(text = text, afterDateMillis = afterDateMillis) }
+            continuation.resume(mmsMessages.await() + smsMessages.await())
+        }
     }
 
-    private fun receiveSmsMessage(intent: Intent): List<SmsMessage?> {
-        val list = arrayListOf<SmsMessage?>()
+    private fun receiveSmsMessage(
+        intent: Intent,
+        onReceiveResult: (MessageReceiveResult) -> Unit
+    ) {
+        val list = arrayListOf<SmsMessage>()
         val smsMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         for (message in smsMessages) {
             message.originatingAddress.asUSPhoneNumber()?.let { address ->
-                list.add(
-                    smsManager.receiveMessage(
-                        address = address,
-                        body = message.messageBody,
-                        dateSent = message.timestampMillis,
-                        dateReceived = System.currentTimeMillis()
-                    )
-                )
+                smsManager.receiveMessage(
+                    address = address,
+                    body = message.messageBody,
+                    dateSent = message.timestampMillis,
+                    dateReceived = System.currentTimeMillis()
+                )?.let { list.add(it) }
             }
         }
-        return list
+        if (list.isNotEmpty()) {
+            onReceiveResult(MessageReceiveResult.Success(list))
+        } else {
+            onReceiveResult(MessageReceiveResult.Failed("Failed to insert the messages into the database"))
+        }
     }
 
-    private suspend fun receiveMmsMessage(intent: Intent): List<MmsMessage?> {
-        return listOf(mmsManager.receiveMessage(intent))
-    }
+    private fun receiveMmsMessage(
+        intent: Intent,
+        onReceiveResult: (MessageReceiveResult) -> Unit
+    ) = mmsManager.receiveMessage(intent, onReceiveResult)
 
     private fun markSmsMessageAsRead(messageId: String) = smsManager.markMessageAsRead(messageId)
 
@@ -136,5 +168,9 @@ internal class ContentManagerImpl(
     private fun Intent.isMms(): Boolean {
         val isWAPAction = action == WAP_PUSH_DELIVER_ACTION || action == WAP_PUSH_RECEIVED_ACTION
         return isWAPAction && type == ContentType.MMS_MESSAGE
+    }
+
+    private fun resumeOnMainThread(action: () -> Unit) {
+        coroutineScope.launch(Dispatchers.Main) { action() }
     }
 }

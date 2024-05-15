@@ -29,9 +29,11 @@ import com.scott.ezmessaging.model.Initializable
 import com.scott.app.ui.theme.EZmessagingTheme
 import com.scott.app.viewmodel.SetupViewModel
 import com.scott.app.viewmodel.SetupViewModel.SetupState
+import com.scott.ezmessaging.model.MessageData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -131,7 +133,20 @@ class SetupActivity: ComponentActivity() {
     }
 
     private fun sendMmsMessage() {
-        val bm = BitmapFactory.decodeResource(resources, R.drawable.kevin)
+        val jpeg = BitmapFactory.decodeResource(resources, R.drawable.android)
+        lifecycleScope.launch {
+            contentManager.sendMmsMessage(
+                message = MessageData.Image(
+                    bitmap = jpeg,
+                    mimeType = ContentManager.SupportedMessageTypes.CONTENT_TYPE_JPEG
+                ),
+                arrayOf("3077605312")
+            ) {
+                println("testingg on mms sent: $it")
+            }
+            //contentManager.getAllMessages()
+            println("testingg done")
+        }
     }
 
     private fun isDefaultMessagingApp() = Telephony.Sms.getDefaultSmsPackage(this) == packageName

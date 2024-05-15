@@ -5,6 +5,7 @@ import android.telephony.SmsManager
 import com.scott.ezmessaging.contentresolver.SmsContentResolver
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.SmsMessage
+import com.scott.ezmessaging.model.MessageSendResult
 import com.scott.ezmessaging.provider.DispatcherProvider
 import com.scott.ezmessaging.receiver.SmsDeliveredBroadcastReceiver
 import com.scott.ezmessaging.receiver.SmsSentBroadcastReceiver
@@ -72,13 +73,13 @@ internal class SmsManager @Inject constructor(
     fun sendMessage(
         address: String,
         text: String,
-        onSent: (Boolean) -> Unit,
+        onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
         val insertedMessage = smsContentResolver.insertSentMessage(address, text)
         val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
         val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
-            onDelivered.invoke(isSuccess)
+            onDelivered(isSuccess)
             if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
         }
         systemSmsManager.sendTextMessage(address, null, text, sentIntent, deliveredIntent)
