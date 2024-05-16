@@ -59,8 +59,9 @@ interface ContentManager {
      * Sends an sms message.
      * @param address the recipient address.
      * @param text the text.
-     * @param onSent invoked with true if the message was successfully sent.
-     * @param onDelivered invoked with false if the message was successfully delivered to the recipient.
+     * @param onSent invoked with [MessageSendResult.Success] if the message was successfully sent.
+     * @param onDelivered invoked with true if the message was successfully delivered to the recipient. Depending
+     * on the carrier, this may not always be available.
      */
     fun sendSmsMessage(
         address: String,
@@ -73,7 +74,7 @@ interface ContentManager {
      * Sends an mms message.
      * @param message The [MessageData] to send.
      * @param recipients a list of recipients.
-     * @param onSent invoked with true if the message was successfully sent.
+     * @param onSent invoked with [MessageSendResult.Success] if the message was successfully sent.
      */
     fun sendMmsMessage(
         message: MessageData,

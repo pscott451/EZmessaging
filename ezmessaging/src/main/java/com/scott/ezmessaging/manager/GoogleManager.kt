@@ -193,8 +193,7 @@ internal class GoogleManager @Inject constructor(
         message: MessageData,
         fromAddress: String,
         recipients: Array<String>,
-        onSent: (MessageSendResult) -> Unit,
-        /*onDelivered: (Boolean) -> Unit*/
+        onSent: (MessageSendResult) -> Unit
     ) {
         try {
             val mmsPart = when (message) {
@@ -379,7 +378,6 @@ internal class GoogleManager @Inject constructor(
             val reader = FileInputStream(mDownloadFile)
             val response = ByteArray(nBytes)
             reader.read(response, 0, nBytes)
-            //val tasks: List<CommonAsyncTask> = getNotificationTask(context, intent, response)
             val uri = DownloadRequest.persist(
                 context, response,
                 MmsConfig.Overridden(MmsConfig(context), null),
@@ -388,11 +386,6 @@ internal class GoogleManager @Inject constructor(
             )
             mDownloadFile.delete()
             reader.close()
-            // TODO do I need an ACK task?
-            /*if (tasks != null) {
-                Log.v(MmsReceivedReceiver.TAG, "running the common async notifier for download")
-                for (task in tasks) task.executeOnExecutor(MmsReceivedReceiver.RECEIVE_NOTIFICATION_EXECUTOR)
-            }*/
             processResult(GoogleProcessResult.ProcessSuccess(uri))
         } catch (e: FileNotFoundException) {
             processResult(GoogleProcessResult.ProcessFailed("MMS received, file not found exception"))

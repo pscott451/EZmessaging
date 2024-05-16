@@ -17,7 +17,7 @@ import javax.inject.Singleton
  * Must be initialized with a ComponentActivity.
  */
 @Singleton
-class DeviceManager @Inject constructor(
+internal class DeviceManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
 
@@ -54,5 +54,5 @@ class DeviceManager @Inject constructor(
     /**
      * @return The main number of this device.
      */
-    fun getThisDeviceMainNumber(): String = thisDeviceNumbers.first() // IDK how to handle this currently
+    fun getThisDeviceMainNumber(): String = thisDeviceNumbers.first()
 }

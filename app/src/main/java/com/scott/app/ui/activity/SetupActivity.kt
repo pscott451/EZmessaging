@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.scott.app.domain.RequestPermissionsUseCase
 import com.scott.ezmessaging.manager.ContentManager
-import com.scott.ezmessaging.manager.DeviceManager
 import com.scott.ezmessaging.model.Initializable
 import com.scott.app.ui.theme.EZmessagingTheme
 import com.scott.app.viewmodel.SetupViewModel
@@ -44,9 +43,6 @@ class SetupActivity: ComponentActivity() {
 
     @Inject
     lateinit var requestPermissionsUseCase: RequestPermissionsUseCase
-
-    @Inject
-    lateinit var deviceManager: DeviceManager
 
     @Inject
     lateinit var contentManager: ContentManager
@@ -111,12 +107,12 @@ class SetupActivity: ComponentActivity() {
 
     @SuppressLint("MissingPermission")
     private fun initDeviceManager() {
-        deviceManager.initializedState.onEach {
+        contentManager.initializedState.onEach {
             if (it is Initializable.Initialized) {
-                sendSmsMessage()
+                sendMmsMessage()
             }
         }.launchIn(lifecycleScope)
-        deviceManager.initialize()
+        contentManager.initialize()
     }
 
     private fun sendSmsMessage() {

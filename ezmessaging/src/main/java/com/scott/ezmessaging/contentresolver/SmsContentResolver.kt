@@ -56,7 +56,7 @@ internal class SmsContentResolver @Inject constructor(
                     val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
                     val body = cursor.getColumnValue(COLUMN_SMS_BODY)
 
-                    // I don't care about messages that don't have all the required info so forcing unwrapping.
+                    // I don't care about messages that don't have all the required info so force unwrapping.
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
