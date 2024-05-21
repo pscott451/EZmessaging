@@ -43,7 +43,7 @@ internal class SmsContentResolver @Inject constructor(
     fun getAllReceivedSmsMessages(): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         contentResolver.getCursor(
-            uri = Uri.parse(CONTENT_SMS_INBOX),
+            uri = CONTENT_SMS_INBOX,
             columnsToReturn = columns
         )?.let { cursor ->
             while (cursor.moveToNext()) {
@@ -80,7 +80,7 @@ internal class SmsContentResolver @Inject constructor(
     fun getAllSentSmsMessages(): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         contentResolver.getCursor(
-            uri = Uri.parse(CONTENT_SMS_OUTBOX),
+            uri = CONTENT_SMS_OUTBOX,
             columnsToReturn = columns
         )?.let { cursor ->
             while (cursor.moveToNext()) {
@@ -215,7 +215,7 @@ internal class SmsContentResolver @Inject constructor(
         // If the filters are null, just return. Otherwise, it'll return everything.
         if (columnsFilter.isEmpty()) return messages
         contentResolver.getCursor(
-            uri = Uri.parse(uri),
+            uri = uri,
             columnsToReturn = columns,
             columnsFilter
         )?.let { cursor ->

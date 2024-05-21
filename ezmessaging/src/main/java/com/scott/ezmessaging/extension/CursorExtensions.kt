@@ -6,6 +6,12 @@ import android.net.Uri
 import android.util.Log
 
 internal fun ContentResolver?.getCursor(
+    uri: String,
+    columnsToReturn: Array<String>? = null,
+    columnFilters: String? = null
+): Cursor? = this?.getCursor(Uri.parse(uri), columnsToReturn, columnFilters)
+
+internal fun ContentResolver?.getCursor(
     uri: Uri,
     columnsToReturn: Array<String>? = null,
     columnFilters: String? = null

@@ -12,7 +12,10 @@ internal fun String?.asUSPhoneNumber(): String? {
     return lastTen.ifEmpty { null }
 }
 
-internal fun String?.convertDateToMilliseconds(): Long? {
+/**
+ * Converts a date in seconds to milliseconds. If the date is already in milliseconds, does nothing.
+ */
+internal fun String?.convertDateToEpochMilliseconds(): Long? {
     return try {
         if (this?.length == 13) {
             this.toLong()

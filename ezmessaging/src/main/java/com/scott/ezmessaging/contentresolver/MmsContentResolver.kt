@@ -10,10 +10,9 @@ import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.AfterDate
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.TextBodyQuery
 import com.scott.ezmessaging.extension.asUSPhoneNumber
-import com.scott.ezmessaging.extension.convertDateToMilliseconds
+import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.extension.printAllColumns
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
 import com.scott.ezmessaging.manager.DeviceManager
@@ -194,7 +193,7 @@ internal class MmsContentResolver @Inject constructor(
         val messageIdToMetaData = mutableMapOf<String, ArrayList<MessageMetadata>>()
         if (columnFilters == "") return messageIdToMetaData
         contentResolver.getCursor(
-            uri = Uri.parse(CONTENT_MMS_ALL),
+            uri = CONTENT_MMS_ALL,
             columnsToReturn = arrayOf(
                 COLUMN_MMS_ID,
                 COLUMN_MMS_THREAD_ID,
@@ -237,7 +236,7 @@ internal class MmsContentResolver @Inject constructor(
         val messageIdToAddresses = mutableMapOf<String, AddressMetadata>()
         if (columnFilters == "") return messageIdToAddresses
         contentResolver.getCursor(
-            uri = Uri.parse(CONTENT_MMS_ADDRESS),
+            uri = CONTENT_MMS_ADDRESS,
             columnsToReturn = arrayOf(
                 COLUMN_MMS_ADDRESS,
                 COLUMN_MMS_PARTICIPANT_TYPE,
@@ -278,7 +277,7 @@ internal class MmsContentResolver @Inject constructor(
         val messageIdToContent = mutableMapOf<String, ContentMetadata>()
         if (columnFilters == "") return messageIdToContent
         contentResolver.getCursor(
-            uri = Uri.parse(CONTENT_MMS_BODY),
+            uri = CONTENT_MMS_BODY,
             columnsToReturn = arrayOf(
                 COLUMN_MMS_TEXT,
                 COLUMN_MMS_DATA,
@@ -388,8 +387,8 @@ internal class MmsContentResolver @Inject constructor(
                 senderAddress = senderAddress,
                 text = text,
                 // Some MMS messages are in seconds. If so, convert to milliseconds for consistency
-                dateSent = dateSent.convertDateToMilliseconds() ?: 0,
-                dateReceived = dateReceived.convertDateToMilliseconds() ?: 0,
+                dateSent = dateSent.convertDateToEpochMilliseconds() ?: 0,
+                dateReceived = dateReceived.convertDateToEpochMilliseconds() ?: 0,
                 hasBeenRead = hasBeenRead == "1",
                 hasImage = hasImage,
                 messageType = messageType,
