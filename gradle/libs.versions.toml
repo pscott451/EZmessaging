@@ -1,31 +1,27 @@
 [versions]
-activityCompose = "1.8.2"
-agp = "7.4.2"
+activityCompose = "1.9.0"
+agp = "8.3.0"
 androidxTest = "1.5.0"
 coil = "2.2.2"
-composeBom = "2024.02.02"
+composeBom = "2024.05.00"
 constraintLayout = "1.0.1"
 coreKtx = "1.12.0"
 coroutines = "1.7.1"
 espressoCore = "3.5.1"
-hilt = "2.44"
+hilt = "2.51.1"
 junit4 = "4.13.2"
 junit4android = "1.1.4"
 junit5 = "5.10.0"
 junit5Plugin = "1.10.0.0"
 kotest = "5.0.1"
-kotlin = "1.7.20"
+kotlin = "1.9.23"
 lifecycleRuntimeKtx = "2.7.0"
-lifecycleviewmodelcompose = "2.7.0"
+lifecycleviewmodelcompose = "2.8.0"
 mockk = "1.12.4"
 moshi = "1.15.0"
 okhttp = "2.5.0"
 retrofit = "2.9.0"
-room = "2.6.1"
 turbine = "0.12.1"
-kotlinBom = "1.8.0"
-appcompat = "1.6.1"
-material = "1.11.0"
 
 [libraries]
 
@@ -62,11 +58,6 @@ okhttp-urlconnection = { module = "com.squareup.okhttp:okhttp-urlconnection", ve
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-converter = { group = "com.squareup.retrofit2", name = "converter-moshi", version.ref = "retrofit" }
 
-# Room
-room = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-
 # Android Test
 androidtest-core = { group = "androidx.test", name = "core", version.ref = "androidxTest" }
 androidtest-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTest" }
@@ -89,9 +80,6 @@ test-turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "tu
 sharedtest-kotest-api = { group = "io.kotest", name = "kotest-assertions-api", version.ref = "kotest" }
 sharedtest-kotest-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
 sharedtest-kotest-shared = { group = "io.kotest", name = "kotest-assertions-shared", version.ref = "kotest" }
-kotlin-bom = { group = "org.jetbrains.kotlin", name = "kotlin-bom", version.ref = "kotlinBom" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 [plugins]
 # Used for apps

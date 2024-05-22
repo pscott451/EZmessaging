@@ -46,7 +46,7 @@ internal class DownloadManager @Inject constructor(
         val mDownloadFile = File(context.cacheDir, fileName)
 
         val contentUri = Uri.Builder()
-            .authority(MmsFileProvider.AUTHORITY)
+            .authority(MmsFileProvider.getAuthority(context))
             .path(fileName)
             .scheme(ContentResolver.SCHEME_CONTENT)
             .build()
@@ -84,7 +84,7 @@ internal class DownloadManager @Inject constructor(
 
     private fun grantUriPermission(context: Context, contentUri: Uri) {
         context.grantUriPermission(
-            MmsFileProvider.AUTHORITY,
+            MmsFileProvider.getAuthority(context),
             contentUri,
             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
@@ -104,11 +104,12 @@ internal class DownloadManager @Inject constructor(
         override fun onReceive(context: Context?, intent: Intent?) {
             val httpStatus = intent?.getIntExtra(SmsManager.EXTRA_MMS_HTTP_STATUS, 0) ?: 0
             val invalidHttp = httpStatus == 400 || httpStatus == 404
-            if (context != null && intent != null && !invalidHttp && resultCode == Activity.RESULT_OK) {
-                onDownloadCompleteListeners[action]?.invoke(DownloadSuccess(intent))
+            val downloadResult = if (context != null && intent != null && !invalidHttp && resultCode == Activity.RESULT_OK) {
+                DownloadSuccess(intent)
             } else {
-                onDownloadCompleteListeners[action]?.invoke(DownloadError(httpStatus, resultCode))
+                DownloadError(httpStatus, resultCode)
             }
+            onDownloadCompleteListeners[action]?.invoke(downloadResult)
             onDownloadCompleteListeners.remove(action)
             context?.unregisterReceiver(this)
         }

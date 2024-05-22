@@ -1,16 +1,17 @@
 package com.scott.ezmessaging.manager
 
 import android.content.Intent
-import android.util.Log
-import com.scott.ezmessaging.BuildConfig
 import com.scott.ezmessaging.contentresolver.MmsContentResolver
+import com.scott.ezmessaging.model.GoogleProcessResult
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.model.MessageData
+import com.scott.ezmessaging.model.MessageReceiveResult
+import com.scott.ezmessaging.model.MessageSendResult
+import com.scott.ezmessaging.provider.DispatcherProvider
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 /**
  * Responsible for handling all [MmsMessage].
@@ -40,39 +41,36 @@ internal class MmsManager @Inject constructor(
     /**
      * Handles receiving a message from another device.
      */
-    suspend fun receiveMessage(intent: Intent) = suspendCoroutine { continuation ->
+    fun receiveMessage(
+        intent: Intent,
+        onReceiveResult: (MessageReceiveResult) -> Unit
+    ) {
         googleManager.parseReceivedMmsIntent(intent) { processResult ->
-            when (processResult) {
-                is GoogleManager.ProcessResult.ProcessFailed -> {
-                    if (BuildConfig.DEBUG) {
-                        Log.e(MmsManager::class.simpleName, "An error occurred receiving the sms message: ${processResult.errorMessage}")
-                    }
-                    continuation.resume(null)
+            val receiveResult = when (processResult) {
+                is GoogleProcessResult.ProcessFailed -> {
+                    MessageReceiveResult.Failed(processResult.errorMessage)
                 }
 
-                is GoogleManager.ProcessResult.ProcessSuccess -> {
-                    continuation.resume(mmsContentResolver.findMessageByUri(processResult.saveLocation))
+                is GoogleProcessResult.ProcessSuccess -> {
+                    mmsContentResolver.findMessageByUri(processResult.saveLocation)?.let {
+                        MessageReceiveResult.Success(listOf(it))
+                    } ?: run {
+                        MessageReceiveResult.Failed("No messages found after parsing intent")
+                    }
                 }
             }
+            onReceiveResult(receiveResult)
         }
     }
 
     /**
      * Sends an MMS message to another device and inserts the value into the content resolver.
      */
-    suspend fun sendMessage(
+    fun sendMessage(
         message: MessageData,
-        recipients: Array<String>
-    ): MmsMessage? = suspendCoroutine { continuation ->
-        googleManager.sendMmsMessage(message, deviceManager.getThisDeviceMainNumber(), recipients) { processResult ->
-            if (processResult is GoogleManager.ProcessResult.ProcessSuccess) {
-                val message = mmsContentResolver.findMessageByUri(processResult.saveLocation)
-                continuation.resume(message)
-            } else {
-                continuation.resume(null)
-            }
-        }
-    }
+        recipients: Array<String>,
+        onSent: (MessageSendResult) -> Unit
+    ) = googleManager.sendMmsMessage(message, deviceManager.getThisDeviceMainNumber(), recipients, onSent)
 
     /**
      * Marks a message with the provided [messageId] as read.

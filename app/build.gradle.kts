@@ -1,6 +1,5 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    //id("kotlin-kapt")
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.jetbrainsKotlinKapt)
@@ -44,12 +43,14 @@ android {
         buildFeatures.buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.3.2"
+        kotlinCompilerExtensionVersion = "1.5.13"
     }
+    namespace = "com.scott.app"
 }
 
 dependencies {
     implementation(project(":ezmessaging"))
+    //implementation("com.github.pscott451:EZmessaging:1.0.3")
 
     // Android Core
     implementation(libs.androidx.core.ktx)

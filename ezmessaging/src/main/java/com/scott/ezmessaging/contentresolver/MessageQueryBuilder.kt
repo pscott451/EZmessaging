@@ -1,7 +1,7 @@
 package com.scott.ezmessaging.contentresolver
 
 /**
- * Builds queries that can be used for retrieving messages from the system database.
+ * Builds queries that can be used for retrieving messages from the database.
  * Usage:
  * Add [Query]s to the builder and [build].
  * MessageQueryBuilder()

@@ -1,20 +1,15 @@
 package com.scott.ezmessaging.manager
 
-import android.app.Activity
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.database.DatabaseUtils
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Telephony
 import android.telephony.SmsManager
-import androidx.core.content.ContextCompat
 import com.android.mms.dom.smil.parser.SmilXmlSerializer
 import com.android.mms.service.DownloadRequest
 import com.android.mms.service.MmsConfig
@@ -43,8 +38,11 @@ import com.scott.ezmessaging.download.DownloadManager.DownloadResult.DownloadSuc
 import com.scott.ezmessaging.extension.getCursor
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
+import com.scott.ezmessaging.model.GoogleProcessResult
 import com.scott.ezmessaging.model.MessageData
+import com.scott.ezmessaging.model.MessageSendResult
 import com.scott.ezmessaging.receiver.MmsFileProvider
+import com.scott.ezmessaging.receiver.MmsSentBroadcastReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -74,13 +72,13 @@ internal class GoogleManager @Inject constructor(
      */
     fun parseReceivedMmsIntent(
         intent: Intent,
-        processResult: (ProcessResult) -> Unit
+        processResult: (GoogleProcessResult) -> Unit
     ) {
         val pushData = intent.getByteArrayExtra("data")
         val pdu = PduParser(pushData).parse()
 
         if (pdu == null) {
-            processResult(ProcessResult.ProcessFailed("Invalid PUSH data"))
+            processResult(GoogleProcessResult.ProcessFailed("Invalid PUSH data"))
             return
         }
 
@@ -105,9 +103,9 @@ internal class GoogleManager @Inject constructor(
                         context.contentResolver.update(
                             uri, values, null, null
                         )
-                        processResult(ProcessResult.ProcessSuccess(uri))
+                        processResult(GoogleProcessResult.ProcessSuccess(uri))
                     } ?: run {
-                        processResult(ProcessResult.ProcessFailed("Thread ID not found"))
+                        processResult(GoogleProcessResult.ProcessFailed("Thread ID not found"))
                     }
                 }
 
@@ -158,17 +156,15 @@ internal class GoogleManager @Inject constructor(
                         ) { downloadResult ->
                             when (downloadResult) {
                                 is DownloadError -> {
-                                    val errorMessage =
-                                        "Download failed. Result code: ${downloadResult.resultCode}, HTTP Status: ${downloadResult.httpStatus}"
-                                    processResult(ProcessResult.ProcessFailed(errorMessage))
+                                    val errorMessage = "Download failed. Result code: ${downloadResult.resultCode}, HTTP Status: ${downloadResult.httpStatus}"
+                                    processResult(GoogleProcessResult.ProcessFailed(errorMessage))
                                 }
 
                                 is DownloadSuccess -> {
                                     // Finished downloading, add to the database.
                                     with(downloadResult.intent) {
                                         val path = getStringExtra(DownloadManager.EXTRA_FILE_PATH)
-                                        val subscriptionId =
-                                            getIntExtra(DownloadManager.EXTRA_SUBSCRIPTION_ID, SmsManager.getDefaultSmsSubscriptionId())
+                                        val subscriptionId = getIntExtra(DownloadManager.EXTRA_SUBSCRIPTION_ID, SmsManager.getDefaultSmsSubscriptionId())
                                         val locationUrl = getStringExtra(DownloadManager.EXTRA_LOCATION_URL)
                                         persistDownloadToDatabase(
                                             context,
@@ -182,14 +178,14 @@ internal class GoogleManager @Inject constructor(
                             }
                         }
                     } ?: run {
-                        processResult(ProcessResult.ProcessFailed("Invalid PDU"))
+                        processResult(GoogleProcessResult.ProcessFailed("Invalid PDU"))
                     }
                 }
             }
         } catch (e: MmsException) {
-            processResult(ProcessResult.ProcessFailed("An Mms Exception Occurred. Type was: $messageType"))
+            processResult(GoogleProcessResult.ProcessFailed("An Mms Exception Occurred. Type was: $messageType"))
         } catch (e: Exception) {
-            processResult(ProcessResult.ProcessFailed("An unknown error occurred"))
+            processResult(GoogleProcessResult.ProcessFailed("An unknown error occurred"))
         }
     }
 
@@ -197,12 +193,9 @@ internal class GoogleManager @Inject constructor(
         message: MessageData,
         fromAddress: String,
         recipients: Array<String>,
-        sentResult: (ProcessResult) -> Unit
+        onSent: (MessageSendResult) -> Unit
     ) {
-        val callbackId = System.currentTimeMillis()
         try {
-            val sendResultCallbackObject = SendResultCallbackObject(sentResult)
-            sendMessageCallbacks[callbackId] = sendResultCallbackObject
             val mmsPart = when (message) {
                 is MessageData.Image -> {
                     var compressQuality = 100
@@ -216,15 +209,15 @@ internal class GoogleManager @Inject constructor(
                     val isValidType = message.mimeType.isValidMessageType()
                     when {
                         imageByteArray == null -> {
-                            invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("Failed to convert the bitmap to a byte array"))
+                            onSent(MessageSendResult.Failed("Failed to convert the bitmap to a byte array"))
                             return
                         }
                         imageByteArray.size > ONE_MEGA_BYTE -> {
-                            invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("Image too large to send. Size after max compression: ${imageByteArray.size}"))
+                            onSent(MessageSendResult.Failed("Image too large to send. Size after max compression: ${imageByteArray.size}"))
                             return
                         }
                         !isValidType -> {
-                            invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("Invalid message type: ${message.mimeType}"))
+                            onSent(MessageSendResult.Failed("Invalid message type: ${message.mimeType}"))
                             return
                         }
                         else -> {
@@ -239,7 +232,7 @@ internal class GoogleManager @Inject constructor(
 
                 is MessageData.Text -> {
                     if (message.text.isEmpty()) {
-                        invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("Message cannot be empty"))
+                        onSent(MessageSendResult.Failed("Message cannot be empty"))
                         return
                     }
                     MMSPart().apply {
@@ -264,23 +257,8 @@ internal class GoogleManager @Inject constructor(
                 -1
             )
 
-            sendResultCallbackObject.apply {
-                cachedFile = sendFile
-                saveLocation = locationUri
-            }
-
-            val intent = Intent(MmsSent.MMS_SENT).apply {
-                putExtra(EXTRA_CALLBACK_ID, callbackId)
-            }
-
-            ContextCompat.registerReceiver(context, MmsSent(), IntentFilter(MmsSent.MMS_SENT), ContextCompat.RECEIVER_NOT_EXPORTED)
-
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
             val writerUri = Uri.Builder()
-                .authority(MmsFileProvider.AUTHORITY)
+                .authority(MmsFileProvider.getAuthority(context))
                 .path(fileName)
                 .scheme(ContentResolver.SCHEME_CONTENT)
                 .build()
@@ -302,17 +280,23 @@ internal class GoogleManager @Inject constructor(
             }
 
             writerUri?.let {
+                val sentIntent = MmsSentBroadcastReceiver().buildPendingIntent(context) { sendResult ->
+                    if (sendResult is MessageSendResult.Success) {
+                        markTheMessageAsSent(context, locationUri)
+                    }
+                    onSent(sendResult)
+                    sendFile.delete()
+                }
                 val smsManager = context.getSystemService(SmsManager::class.java)
                 smsManager.sendMultimediaMessage(
                     context,
-                    it, null, configOverrides, pendingIntent
+                    it, null, configOverrides, sentIntent
                 )
             } ?: run {
-                invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("Writer URI was null"))
-                pendingIntent.send(SmsManager.MMS_ERROR_IO_ERROR)
+                onSent(MessageSendResult.Failed("Writer URI was null"))
             }
         } catch (e: Exception) {
-            invokeSentResultCallback(context, callbackId, ProcessResult.ProcessFailed("An error occurred sending the mms message: ${e.message}"))
+            onSent(MessageSendResult.Failed("An error occurred sending the mms message: ${e.message}"))
         }
     }
 
@@ -326,7 +310,7 @@ internal class GoogleManager @Inject constructor(
             recipients.forEach {
                 addTo(EncodedStringValue(it))
             }
-            date = System.currentTimeMillis()
+            date = System.currentTimeMillis() / 1000
             messageSize = 1
             messageClass = PduHeaders.MESSAGE_CLASS_PERSONAL_STR.toByteArray()
             expiry = (7 * 24 * 60 * 60).toLong()
@@ -386,7 +370,7 @@ internal class GoogleManager @Inject constructor(
         path: String?,
         subscriptionID: Int,
         locationUrl: String,
-        processResult: (ProcessResult) -> Unit
+        processResult: (GoogleProcessResult) -> Unit
     ) {
         try {
             val mDownloadFile = File(path!!)
@@ -394,7 +378,6 @@ internal class GoogleManager @Inject constructor(
             val reader = FileInputStream(mDownloadFile)
             val response = ByteArray(nBytes)
             reader.read(response, 0, nBytes)
-            //val tasks: List<CommonAsyncTask> = getNotificationTask(context, intent, response)
             val uri = DownloadRequest.persist(
                 context, response,
                 MmsConfig.Overridden(MmsConfig(context), null),
@@ -403,16 +386,11 @@ internal class GoogleManager @Inject constructor(
             )
             mDownloadFile.delete()
             reader.close()
-            // TODO do I need an ACK task?
-            /*if (tasks != null) {
-                Log.v(MmsReceivedReceiver.TAG, "running the common async notifier for download")
-                for (task in tasks) task.executeOnExecutor(MmsReceivedReceiver.RECEIVE_NOTIFICATION_EXECUTOR)
-            }*/
-            processResult(ProcessResult.ProcessSuccess(uri))
+            processResult(GoogleProcessResult.ProcessSuccess(uri))
         } catch (e: FileNotFoundException) {
-            processResult(ProcessResult.ProcessFailed("MMS received, file not found exception"))
+            processResult(GoogleProcessResult.ProcessFailed("MMS received, file not found exception"))
         } catch (e: IOException) {
-            processResult(ProcessResult.ProcessFailed("MMS received, io exception"))
+            processResult(GoogleProcessResult.ProcessFailed("MMS received, io exception"))
         }
     }
 
@@ -461,79 +439,17 @@ internal class GoogleManager @Inject constructor(
         return null
     }
 
-    /**
-     * A sealed interface representing the process status.
-     */
-    sealed interface ProcessResult {
-        /**
-         * An error occurred processing the message.
-         * @property errorMessage the message indicating the error.
-         */
-        data class ProcessFailed(val errorMessage: String) : ProcessResult
-
-        /**
-         * Successfully processed the mms message.
-         */
-        data class ProcessSuccess(val saveLocation: Uri) : ProcessResult
-    }
-
-    private data class SendResultCallbackObject(
-        val callback: (ProcessResult) -> Unit,
-        var cachedFile: File? = null,
-        var saveLocation: Uri? = null
-    )
-
-    private class MmsSent: BroadcastReceiver() {
-
-        companion object {
-            const val MMS_SENT = "com.scott.ezmessaging.manager.GoogleManager\$MMS_SENT"
-        }
-
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (context != null && intent != null) {
-                val sendResultCallbackId = intent.getLongExtra(EXTRA_CALLBACK_ID, -1)
-                if (resultCode == Activity.RESULT_OK) {
-                    sendMessageCallbacks[sendResultCallbackId]?.saveLocation?.let { saveLocation ->
-                        invokeSentResultCallback(context, sendResultCallbackId, ProcessResult.ProcessSuccess(saveLocation))
-                    }
-                } else {
-                    invokeSentResultCallback(
-                        context,
-                        sendResultCallbackId,
-                        ProcessResult.ProcessFailed("An error occurred sending the message. Result Code: $resultCode")
-                    )
-                }
-                context.unregisterReceiver(this)
-            }
-        }
+    private fun markTheMessageAsSent(context: Context, uri: Uri) {
+        val values = ContentValues(1)
+        values.put(Telephony.Mms.MESSAGE_BOX, Telephony.Mms.MESSAGE_BOX_SENT)
+        SqliteWrapper.update(
+            context, context.contentResolver, uri, values,
+            null, null
+        )
     }
 
     companion object {
-        private val sendMessageCallbacks = mutableMapOf<Long, SendResultCallbackObject>()
-
-        private fun invokeSentResultCallback(
-            context: Context,
-            id: Long,
-            result: ProcessResult
-        ) {
-            sendMessageCallbacks[id]?.let { callbackObject ->
-                callbackObject.callback.invoke(result)
-                callbackObject.cachedFile?.delete()
-                callbackObject.saveLocation?.let { markTheMessageAsSent(context, it) }
-            }
-            sendMessageCallbacks.remove(id)
-        }
-
-        private fun markTheMessageAsSent(context: Context, uri: Uri) {
-            val values = ContentValues(1)
-            values.put(Telephony.Mms.MESSAGE_BOX, Telephony.Mms.MESSAGE_BOX_SENT)
-            SqliteWrapper.update(
-                context, context.contentResolver, uri, values,
-                null, null
-            )
-        }
-
-        private const val EXTRA_CALLBACK_ID = "ExtraCallBackId"
+        // The max size an MMS message can be. Anything greater will fail to send.
         private const val ONE_MEGA_BYTE = 1_000_000
     }
 }
