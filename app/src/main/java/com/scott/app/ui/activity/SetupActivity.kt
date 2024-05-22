@@ -109,7 +109,7 @@ class SetupActivity: ComponentActivity() {
     private fun initDeviceManager() {
         contentManager.initializedState.onEach {
             if (it is Initializable.Initialized) {
-                sendMmsMessage()
+                sendSmsMessage()
             }
         }.launchIn(lifecycleScope)
         contentManager.initialize()
@@ -132,6 +132,9 @@ class SetupActivity: ComponentActivity() {
         val jpeg = BitmapFactory.decodeResource(resources, R.drawable.android)
         lifecycleScope.launch {
             contentManager.sendMmsMessage(
+                /*message = MessageData.Text(
+                    text = "text"
+                )*/
                 message = MessageData.Image(
                     bitmap = jpeg,
                     mimeType = ContentManager.SupportedMessageTypes.CONTENT_TYPE_JPEG
