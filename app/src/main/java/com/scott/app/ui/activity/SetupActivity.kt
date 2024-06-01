@@ -1,10 +1,8 @@
 package com.scott.app.ui.activity
 
-import com.scott.app.R
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,18 +19,18 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.lifecycleScope
+import com.scott.app.R
 import com.scott.app.domain.RequestPermissionsUseCase
-import com.scott.ezmessaging.manager.ContentManager
-import com.scott.ezmessaging.model.Initializable
-import com.scott.app.ui.theme.EZmessagingTheme
+import com.scott.app.ui.theme.TestAppTheme
 import com.scott.app.viewmodel.SetupViewModel
 import com.scott.app.viewmodel.SetupViewModel.SetupState
-import com.scott.ezmessaging.model.MessageData
+import com.scott.ezmessaging.manager.ContentManager
+import com.scott.ezmessaging.model.Initializable
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
@@ -72,32 +70,32 @@ class SetupActivity: ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            EZmessagingTheme {
+            TestAppTheme {
                 Column(modifier = Modifier.fillMaxSize()) {
                     val initState by setupViewModel.setupState.collectAsState()
 
                     when (initState) {
                         SetupState.PermissionsNotChecked -> checkPermissions()
                         SetupState.PermissionsDenied -> {
-                            Text(text = "Uh oh, you need to open the app settings and allow all permissions")
+                            Text(text = stringResource(id = R.string.setupactivity_allowpermissions))
                             Button(onClick = { openPermissionSettings() }) {
-                                Text(text = "Open Settings")
+                                Text(text = stringResource(id = R.string.setupactivity_opensettings))
                             }
                         }
                         SetupState.DefaultAppNotChecked -> {
                             if (isDefaultMessagingApp()) setupViewModel.defaultAppGranted() else requestAsDefaultMessagingApp()
                         }
                         SetupState.DefaultAppDenied -> {
-                            Text(text = "Uh oh, you need to set as default app")
+                            Text(text = stringResource(id = R.string.setupactivity_setasdefaultapp))
                             Button(onClick = { openDefaultAppSettings() }) {
-                                Text(text = "Set as Default")
+                                Text(text = stringResource(id = R.string.setupactivity_setasdefault))
                             }
                         }
                         SetupState.Ready -> {
-                            initDeviceManager()
+                            initContentManager()
                         }
                         is SetupState.Error -> {
-                            Text(text = "Something bad happened!")
+                            Text(text = stringResource(id = R.string.setupactivity_error))
                         }
                     }
                 }
@@ -105,47 +103,13 @@ class SetupActivity: ComponentActivity() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private fun initDeviceManager() {
+    private fun initContentManager() {
         contentManager.initializedState.onEach {
             if (it is Initializable.Initialized) {
-                sendSmsMessage()
+                startActivity(Intent(this, MainActivity::class.java))
             }
         }.launchIn(lifecycleScope)
         contentManager.initialize()
-    }
-
-    private fun sendSmsMessage() {
-        contentManager.sendSmsMessage(
-            address = "3077605312",
-            text = "11 sms message",
-            onSent = { isSuccess ->
-                println("testingg sms sent 1: $isSuccess")
-            },
-            onDelivered = { isSuccess ->
-                println("testingg sms delivered 1: $isSuccess")
-            }
-        )
-    }
-
-    private fun sendMmsMessage() {
-        val jpeg = BitmapFactory.decodeResource(resources, R.drawable.android)
-        lifecycleScope.launch {
-            contentManager.sendMmsMessage(
-                /*message = MessageData.Text(
-                    text = "text"
-                )*/
-                message = MessageData.Image(
-                    bitmap = jpeg,
-                    mimeType = ContentManager.SupportedMessageTypes.CONTENT_TYPE_JPEG
-                ),
-                arrayOf("3077605312")
-            ) {
-                println("testingg on mms sent: $it")
-            }
-            //contentManager.getAllMessages()
-            println("testingg done")
-        }
     }
 
     private fun isDefaultMessagingApp() = Telephony.Sms.getDefaultSmsPackage(this) == packageName
