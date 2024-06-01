@@ -74,9 +74,9 @@ internal class MmsContentResolver @Inject constructor(
     ): List<MmsMessage> {
         var messages = listOf<MmsMessage>()
         runCatching {
-            val contentMap: Map<String, ContentMetadata>
+            val contentMap: Map<String, List<ContentMetadata>>
             val addressMap: Map<String, AddressMetadata>
-            val metadataMap: Map<String, List<MessageMetadata>>
+            val metadataMap: Map<String, MessageMetadata>
             if (text == null && afterDateMillis != null) {
                 // If searching by date, we need to get the metadata first since that's where the date columns live.
                 val metadataFilters = buildMetadataQuery(
@@ -189,8 +189,8 @@ internal class MmsContentResolver @Inject constructor(
      * If [columnFilters] is an empty string, returns an empty map.
      * If [columnFilters] is null, returns everything.
      */
-    private fun getMessageMetadata(columnFilters: String? = null): Map<String, List<MessageMetadata>> {
-        val messageIdToMetaData = mutableMapOf<String, ArrayList<MessageMetadata>>()
+    private fun getMessageMetadata(columnFilters: String? = null): Map<String, MessageMetadata> {
+        val messageIdToMetaData = mutableMapOf<String, MessageMetadata>()
         if (columnFilters == "") return messageIdToMetaData
         contentResolver.getCursor(
             uri = CONTENT_MMS_ALL,
@@ -217,9 +217,7 @@ internal class MmsContentResolver @Inject constructor(
                     hasBeenRead = hasBeenRead
                 )
                 id?.let {
-                    messageIdToMetaData[it]?.add(metaData) ?: run {
-                        messageIdToMetaData[it] = arrayListOf(metaData)
-                    }
+                    messageIdToMetaData[it] = metaData
                 }
             }
         }
@@ -273,8 +271,8 @@ internal class MmsContentResolver @Inject constructor(
      * If [columnFilters] is an empty string, returns an empty map.
      * If [columnFilters] is null, returns everything.
      */
-    private fun getMessageContent(columnFilters: String? = null): Map<String, ContentMetadata> {
-        val messageIdToContent = mutableMapOf<String, ContentMetadata>()
+    private fun getMessageContent(columnFilters: String? = null): Map<String, List<ContentMetadata>> {
+        val messageIdToContent = mutableMapOf<String, ArrayList<ContentMetadata>>()
         if (columnFilters == "") return messageIdToContent
         contentResolver.getCursor(
             uri = CONTENT_MMS_BODY,
@@ -292,18 +290,15 @@ internal class MmsContentResolver @Inject constructor(
                 val uniqueId = cursor.getColumnValue(COLUMN_MMS_ID)
                 val type = cursor.getColumnValue(COLUMN_MMS_CT)
                 val text = cursor.getColumnValue(COLUMN_MMS_TEXT)
+                val content = ContentMetadata(
+                    uniqueId = uniqueId,
+                    text = text,
+                    type = type
+                )
 
                 if (mid != null && type.isValidMessageType()) {
-                    messageIdToContent[mid]?.let {
-                        it.id = uniqueId
-                        it.text = text
-                        it.type = type
-                    } ?: run {
-                        messageIdToContent[mid] = ContentMetadata(
-                            id = uniqueId,
-                            text = text,
-                            type = type
-                        )
+                    messageIdToContent[mid]?.add(content) ?: run {
+                        messageIdToContent[mid] = arrayListOf(content)
                     }
                 }
             }
@@ -312,32 +307,49 @@ internal class MmsContentResolver @Inject constructor(
     }
 
     private fun buildMessages(
-        metadataMap: Map<String, List<MessageMetadata>>,
-        contentMap: Map<String, ContentMetadata>,
+        metadataMap: Map<String, MessageMetadata>,
+        contentMap: Map<String, List<ContentMetadata>>,
         addressesMap: Map<String, AddressMetadata>
     ): List<MmsMessage> {
-        addressesMap.forEach { (msgId, addressMetadata) ->
-            metadataMap[msgId]?.let {
-                it.forEach { messageMetadata ->
-                    messageMetadata.senderAddress = addressMetadata.senderAddress
-                    messageMetadata.participants.addAll(addressMetadata.participants)
+        val messageDetails = mutableMapOf<String, ArrayList<MessageDetails>>()
+
+        contentMap.forEach { (msgId, contentMetadata) ->
+            contentMetadata.forEach { content ->
+                val details = MessageDetails(
+                    messageId = msgId,
+                    text = content.text,
+                    messageType = content.type,
+                    uniqueId = content.uniqueId
+                )
+                messageDetails[msgId]?.add(details) ?: run {
+                    messageDetails[msgId] = arrayListOf(details)
                 }
             }
         }
 
-        contentMap.forEach { (msgId, contentMetadata) ->
-            metadataMap[msgId]?.let {
-                it.forEach { messageMetadata ->
-                    messageMetadata.text = contentMetadata.text
-                    messageMetadata.messageType = contentMetadata.type
-                    messageMetadata.uniqueId = contentMetadata.id
+        addressesMap.forEach { (msgId, addressMetadata) ->
+            messageDetails[msgId]?.let {  detailsList ->
+                detailsList.forEach {
+                    it.senderAddress = addressMetadata.senderAddress
+                    it.participants.addAll(addressMetadata.participants)
+                }
+            }
+        }
+
+        metadataMap.forEach { (msgId, metadata) ->
+            messageDetails[msgId]?.let { detailsList ->
+                detailsList.forEach {
+                    it.threadId = metadata.threadId
+                    it.dateSent = metadata.dateSent
+                    it.dateReceived = metadata.dateReceived
+                    it.hasBeenRead = metadata.hasBeenRead
                 }
             }
         }
 
         val messages = arrayListOf<MmsMessage>()
-        metadataMap.values.forEach { metadataMessages ->
-            messages.addAll(metadataMessages.mapNotNull { it.toMessage() })
+        messageDetails.values.forEach { details ->
+            messages.addAll(details.mapNotNull { it.toMessage() })
         }
         return messages
     }
@@ -362,7 +374,7 @@ internal class MmsContentResolver @Inject constructor(
         .addQuery(MessageIdsQuery(ids = messageIds, columnName = COLUMN_MMS_MESSAGE_ID))
         .build()
 
-    private fun MessageMetadata.toMessage(): MmsMessage? {
+    private fun MessageDetails.toMessage(): MmsMessage? {
         val threadId = threadId
         val messageId = messageId
         val uniqueId = uniqueId
@@ -436,17 +448,25 @@ internal class MmsContentResolver @Inject constructor(
         private const val PARTICIPANT_TYPE_TO = 151
     }
 
-    private data class MessageMetadata(
-        val threadId: String? = null,
-        val messageId: String? = null,
+    private data class MessageDetails(
+        var threadId: String? = null,
+        var messageId: String? = null,
         var uniqueId: String? = null,
         var dateSent: String? = null,
         var dateReceived: String? = null,
-        val hasBeenRead: String? = null,
+        var hasBeenRead: String? = null,
         var senderAddress: String? = null,
-        val participants: MutableSet<String?> = mutableSetOf(),
+        var participants: MutableSet<String?> = mutableSetOf(),
         var text: String? = null,
         var messageType: String? = null
+    )
+
+    private data class MessageMetadata(
+        val threadId: String?,
+        val messageId: String?,
+        var dateSent: String?,
+        var dateReceived: String?,
+        val hasBeenRead: String?
     )
 
     private data class AddressMetadata(
@@ -455,7 +475,7 @@ internal class MmsContentResolver @Inject constructor(
     )
 
     private data class ContentMetadata(
-        var id: String?,
+        var uniqueId: String?,
         var text: String?,
         var type: String?
     )
