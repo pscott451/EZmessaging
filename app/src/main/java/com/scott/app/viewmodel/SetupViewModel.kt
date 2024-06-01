@@ -13,22 +13,33 @@ class SetupViewModel @Inject constructor(): ViewModel() {
     private val _setupState = MutableStateFlow<SetupState>(SetupState.PermissionsNotChecked)
     val setupState = _setupState.asStateFlow()
 
+    private val preRequisites = PreRequisites()
+
     fun permissionDenied() {
         setState(SetupState.PermissionsDenied)
     }
 
     fun permissionGranted() {
-        // All permissions were granted. Need to check if default messaging app
-        setState(SetupState.DefaultAppNotChecked)
+        preRequisites.permissionsGranted = true
+        checkPreRequisites()
     }
 
     fun defaultAppGranted() {
-        // Set as default. Permissions should have already been granted as well.
-        setState(SetupState.Ready)
+        preRequisites.setAsDefaultApp = true
+        checkPreRequisites()
     }
 
     fun defaultAppDenied() {
         setState(SetupState.DefaultAppDenied)
+    }
+
+    private fun checkPreRequisites() {
+        val state = when {
+            !preRequisites.permissionsGranted -> SetupState.PermissionsNotChecked
+            !preRequisites.setAsDefaultApp -> SetupState.DefaultAppNotChecked
+            else -> SetupState.Ready
+        }
+        setState(state)
     }
 
     private fun setState(state: SetupState) {
@@ -36,11 +47,16 @@ class SetupViewModel @Inject constructor(): ViewModel() {
     }
 
     sealed interface SetupState {
-        object PermissionsNotChecked: SetupState
-        object PermissionsDenied: SetupState
-        object DefaultAppNotChecked: SetupState
-        object DefaultAppDenied: SetupState
-        object Ready: SetupState
+        data object PermissionsNotChecked: SetupState
+        data object PermissionsDenied: SetupState
+        data object DefaultAppNotChecked: SetupState
+        data object DefaultAppDenied: SetupState
+        data object Ready: SetupState
         data class Error(val throwable: Throwable): SetupState
     }
+
+    private data class PreRequisites(
+        var permissionsGranted: Boolean = false,
+        var setAsDefaultApp: Boolean = false
+    )
 }

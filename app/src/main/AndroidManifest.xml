@@ -37,8 +37,9 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
@@ -54,6 +55,11 @@
                 <data android:scheme="mmsto" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".ui.activity.MainActivity"/>
+        <activity android:name=".ui.activity.SendMmsActivity"/>
+        <activity android:name=".ui.activity.SendSmsActivity"/>
+        <activity android:name=".ui.activity.ShowAllMessagesActivity"/>
 
         <receiver
             android:name=".receiver.SmsReceiver"

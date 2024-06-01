@@ -2,10 +2,16 @@ package com.scott.app.receiver
 
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.receiver.MessageReceivedBroadcastReceiver
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
+@AndroidEntryPoint
 internal class SmsReceiver: MessageReceivedBroadcastReceiver() {
 
+    @Inject
+    lateinit var messageReceiver: MessageReceiver
+
     override fun onMessageReceived(message: Message) {
-        println("testingg on sms message received: $message")
+        messageReceiver.receiveMessage(message)
     }
 }

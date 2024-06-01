@@ -28,7 +28,7 @@ internal class SmsManager @Inject constructor(
     dispatcherProvider: DispatcherProvider,
 ) {
 
-    private val systemSmsManager = context.getSystemService(SmsManager::class.java)
+    private val systemSmsManager: SmsManager? = context.getSystemService(SmsManager::class.java)
 
     private val coroutineScope = CoroutineScope(dispatcherProvider.io())
 
@@ -76,13 +76,19 @@ internal class SmsManager @Inject constructor(
         onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
-        val insertedMessage = smsContentResolver.insertSentMessage(address, text)
-        val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
-        val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
-            onDelivered(isSuccess)
-            if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
+        if (address.isEmpty() || text.isEmpty()) {
+            onSent.invoke(MessageSendResult.Failed("Address and text cannot be empty"))
+        } else {
+            val insertedMessage = smsContentResolver.insertSentMessage(address, text)
+            val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
+            val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
+                onDelivered(isSuccess)
+                if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
+            }
+            systemSmsManager?.sendTextMessage(address, null, text, sentIntent, deliveredIntent) ?: run {
+                onSent.invoke(MessageSendResult.Failed("No SmsManager detected. Are you using an Emulator?"))
+            }
         }
-        systemSmsManager.sendTextMessage(address, null, text, sentIntent, deliveredIntent)
     }
 
     /**
