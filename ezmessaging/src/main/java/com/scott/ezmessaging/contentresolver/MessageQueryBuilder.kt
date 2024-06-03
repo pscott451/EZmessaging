@@ -5,22 +5,25 @@ package com.scott.ezmessaging.contentresolver
  * Usage:
  * Add [Query]s to the builder and [build].
  * MessageQueryBuilder()
- *             .addQuery(TextBodyQuery(text = text, columnName = COLUMN_SMS_BODY))
+ *             .addQuery(ExactTextQuery(text = text, columnName = COLUMN_SMS_BODY))
+ *             .addQuery(ContainsTextQuery(text = text, columnName = COLUMN_SMS_BODY))
  *             .addQuery(AfterDateQuery(dateMillis = dateInMillis, columnName = COLUMN_SMS_DATE_RECEIVED))
  *             .addQuery(MessageIdsQuery(ids = msgIds, columnName = COLUMN_MMS_MID))
  *             .build()
  *
- * Example return: "text="Hello" AND date>=1 AND (mid="1" OR mid="2" OR mid="3")"
+ * Example return: "text="Hello" AND "text LIKE "%Hello%" AND date>=1 AND (mid="1" OR mid="2" OR mid="3")"
  */
 internal class MessageQueryBuilder {
 
-    private var textBodyQuery: Query.TextBodyQuery? = null
+    private var exactTextQuery: Query.ExactTextQuery? = null
+    private var containsTextQuery: Query.ContainsTextQuery? = null
     private var afterDateQuery: Query.AfterDateQuery? = null
     private var messageIdsQuery: Query.MessageIdsQuery? = null
 
     fun addQuery(query: Query?): MessageQueryBuilder {
         when (query) {
-            is Query.TextBodyQuery -> textBodyQuery = query
+            is Query.ExactTextQuery -> exactTextQuery = query
+            is Query.ContainsTextQuery -> containsTextQuery = query
             is Query.AfterDateQuery -> afterDateQuery = query
             is Query.MessageIdsQuery -> messageIdsQuery = query
             null -> { /* no op */ }
@@ -30,10 +33,15 @@ internal class MessageQueryBuilder {
 
     fun build(): String {
         var filter = ""
-        val textBodyQuery = textBodyQuery
+        val exactTextQuery = exactTextQuery
+        val containsTextQuery = containsTextQuery
         val afterDateQuery = afterDateQuery
         val messageIdsQuery = messageIdsQuery
-        if (textBodyQuery?.text != null) filter += textBodyQuery.toQuery()
+        if (exactTextQuery?.text != null) filter += exactTextQuery.toQuery()
+        if (containsTextQuery?.text != null) {
+            if (filter.isNotEmpty()) filter += " AND "
+            filter += containsTextQuery.toQuery()
+        }
         if (afterDateQuery?.dateMillis != null) {
             if (filter.isNotEmpty()) filter += " AND "
             filter += afterDateQuery.toQuery()
@@ -49,11 +57,18 @@ internal class MessageQueryBuilder {
         val columnName: String
         fun toQuery(): String
 
-        data class TextBodyQuery(
+        data class ExactTextQuery(
             val text: String?,
             override val columnName: String
         ) : Query {
             override fun toQuery() = text?.let { """$columnName="$it"""" } ?: ""
+        }
+
+        data class ContainsTextQuery(
+            val text: String?,
+            override val columnName: String
+        ) : Query {
+            override fun toQuery() = text?.let { """$columnName LIKE "%$it%"""" } ?: ""
         }
 
         data class AfterDateQuery(

@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.database.DatabaseUtils
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Telephony
@@ -35,6 +36,7 @@ import com.google.android.mms.util.SqliteWrapper
 import com.scott.ezmessaging.download.DownloadManager
 import com.scott.ezmessaging.download.DownloadManager.DownloadResult.DownloadError
 import com.scott.ezmessaging.download.DownloadManager.DownloadResult.DownloadSuccess
+import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
@@ -197,6 +199,25 @@ internal class GoogleManager @Inject constructor(
     ) {
         try {
             val mmsPart = when (message) {
+                is MessageData.ContentUri -> {
+                    var newMessageData: MessageData.Image? = null
+                    context.contentResolver.getCursor(message.uri)?.let { cursor ->
+                        while (cursor.moveToNext()) {
+                            cursor.getColumnValue("mime_type")?.let { mimeType ->
+                                context.contentResolver.openInputStream(message.uri)?.let { inputStream ->
+                                    val image = BitmapFactory.decodeStream(inputStream)
+                                    newMessageData = MessageData.Image(image, mimeType)
+                                }
+                            }
+                        }
+                    }
+                    newMessageData?.let {
+                        sendMmsMessage(it, fromAddress, recipients, onSent)
+                    } ?: run {
+                        onSent(MessageSendResult.Failed("Failed to decode the image from the provided uri"))
+                    }
+                    return
+                }
                 is MessageData.Image -> {
                     var compressQuality = 100
                     var imageByteArray: ByteArray?

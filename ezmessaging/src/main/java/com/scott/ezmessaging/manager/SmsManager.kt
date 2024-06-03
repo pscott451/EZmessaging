@@ -28,7 +28,7 @@ internal class SmsManager @Inject constructor(
     dispatcherProvider: DispatcherProvider,
 ) {
 
-    private val systemSmsManager = context.getSystemService(SmsManager::class.java)
+    private val systemSmsManager: SmsManager? = context.getSystemService(SmsManager::class.java)
 
     private val coroutineScope = CoroutineScope(dispatcherProvider.io())
 
@@ -46,13 +46,19 @@ internal class SmsManager @Inject constructor(
 
     /**
      * @return a list of [SmsMessage] that match the provided params, if they exist.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
-    ): List<Message> = smsContentResolver.findMessages(text = text, afterDateMillis = afterDateMillis)
+    ): List<Message> = smsContentResolver.findMessages(
+        exactText = exactText,
+        containsText = containsText,
+        afterDateMillis = afterDateMillis
+    )
 
     /**
      * Handles receiving a message.
@@ -76,13 +82,19 @@ internal class SmsManager @Inject constructor(
         onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
-        val insertedMessage = smsContentResolver.insertSentMessage(address, text)
-        val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
-        val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
-            onDelivered(isSuccess)
-            if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
+        if (address.isEmpty() || text.isEmpty()) {
+            onSent.invoke(MessageSendResult.Failed("Address and text cannot be empty"))
+        } else {
+            val insertedMessage = smsContentResolver.insertSentMessage(address, text)
+            val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
+            val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
+                onDelivered(isSuccess)
+                if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
+            }
+            systemSmsManager?.sendTextMessage(address, null, text, sentIntent, deliveredIntent) ?: run {
+                onSent.invoke(MessageSendResult.Failed("No SmsManager detected. Are you using an Emulator?"))
+            }
         }
-        systemSmsManager.sendTextMessage(address, null, text, sentIntent, deliveredIntent)
     }
 
     /**

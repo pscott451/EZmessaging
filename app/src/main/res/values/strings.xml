@@ -1,3 +1,29 @@
 <resources>
     <string name="app_name">Test App</string>
+
+    <!-- All -->
+    <string name="all_receivedmessagesheader">If you send a message to yourself, it\'ll show up here 😁</string>
+    <string name="all_receivedmessageentry">Sent from: %s</string>
+
+    <!-- Setup Activity -->
+    <string name="setupactivity_allowpermissions">Uh oh, you need to open the app settings and allow all permissions</string>
+    <string name="setupactivity_opensettings">Open Settings</string>
+    <string name="setupactivity_setasdefaultapp">Uh oh, you need to set as default app</string>
+    <string name="setupactivity_setasdefault">Set as Default</string>
+    <string name="setupactivity_error">Something bad happened!</string>
+
+    <!-- Send Sms -->
+    <string name="sendSms_recipientslabel">Recipient (1 Maximum)</string>
+    <string name="sendSms_messagelabel">Message</string>
+    <string name="sendSms_sendmessagebutton">Send SMS Message</string>
+    <string name="sendSms_sendfailed">Failed. Make sure the recipient is correct and that you have service :)</string>
+    <string name="sendSms_messagedelivered">Message Successfully delivered.</string>
+
+    <!-- Send Mms -->
+    <string name="sendMms_recipientsheader">Separate recipients with a \",\". \nE.g. 5555555555,2222222222</string>
+    <string name="sendMms_recipientslabel">"Recipients"</string>
+    <string name="sendMms_messagelabel">Message</string>
+    <string name="sendMms_sendmessagebutton">Send MMS Message</string>
+    <string name="sendMms_sendimagebutton">Send An Image</string>
+    <string name="sendMms_sendfailed">Failed. Make sure the recipients are correct and that you have service :)</string>
 </resources>

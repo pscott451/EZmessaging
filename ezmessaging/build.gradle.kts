@@ -53,7 +53,7 @@ dependencies {
 
     // Hilt
     kapt(libs.hilt.compiler)
-    implementation(libs.hilt)
+    api(libs.hilt)
 
     // OKHttp
     implementation(libs.okhttp)
@@ -92,7 +92,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "1.0.4"
+            version = "1.1.0"
 
             afterEvaluate {
                 from(components["release"])

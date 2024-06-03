@@ -49,12 +49,13 @@ class SmsManagerTest {
     @Test
     fun `findMessages returns messages from smsContentResolver`() = runTest {
         // Given
-        val text = "text"
+        val exactText = "text"
+        val containsText = "text"
         val afterDate = 1L
-        coEvery { smsContentResolver.findMessages(text = text, afterDateMillis = afterDate) } returns listOf(MessageUtils.buildSmsMessage())
+        coEvery { smsContentResolver.findMessages(exactText = exactText, containsText = containsText, afterDateMillis = afterDate) } returns listOf(MessageUtils.buildSmsMessage())
 
         // When
-        val messages = smsManager.findMessages(text = text, afterDateMillis = afterDate)
+        val messages = smsManager.findMessages(exactText = exactText, containsText = containsText, afterDateMillis = afterDate)
 
         // Then
         messages.shouldBe(listOf(MessageUtils.buildSmsMessage()))

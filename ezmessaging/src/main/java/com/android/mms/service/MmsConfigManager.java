@@ -16,6 +16,7 @@
 
 package com.android.mms.service;
 
+import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -153,7 +154,7 @@ public class MmsConfigManager {
      */
     private void load(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            List<SubscriptionInfo> subs = mSubscriptionManager.getActiveSubscriptionInfoList();
+            @SuppressLint("MissingPermission") List<SubscriptionInfo> subs = mSubscriptionManager.getActiveSubscriptionInfoList();
             if (subs == null || subs.size() < 1) {
                 Log.e(TAG, "MmsConfigManager.load -- empty getActiveSubInfoList");
                 return;

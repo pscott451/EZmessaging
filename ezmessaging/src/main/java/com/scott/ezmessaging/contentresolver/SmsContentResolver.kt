@@ -7,8 +7,9 @@ import android.net.Uri
 import android.util.Log
 import com.scott.ezmessaging.BuildConfig
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.AfterDateQuery
+import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ContainsTextQuery
+import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ExactTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
-import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.TextBodyQuery
 import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
@@ -114,15 +115,17 @@ internal class SmsContentResolver @Inject constructor(
 
     /**
      * @return a list of messages that match the provided params, if they exist.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
     ): List<SmsMessage> {
-        val outboxMessages = findMessages(CONTENT_SMS_OUTBOX, text, afterDateMillis)
-        val inboxMessages = findMessages(CONTENT_SMS_INBOX, text, afterDateMillis)
+        val outboxMessages = findMessages(CONTENT_SMS_OUTBOX, exactText, containsText, afterDateMillis)
+        val inboxMessages = findMessages(CONTENT_SMS_INBOX, exactText, containsText, afterDateMillis)
         return outboxMessages + inboxMessages
     }
 
@@ -140,7 +143,11 @@ internal class SmsContentResolver @Inject constructor(
                 put(COLUMN_SMS_ADDRESS, address)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessages(CONTENT_SMS_OUTBOX, body, dateSent).first()
+            insertedMessage = findMessages(
+                uri = CONTENT_SMS_OUTBOX,
+                exactText = body,
+                dateInMillis = dateSent
+            ).first()
         }.onFailure { logError(it) }
         return insertedMessage
     }
@@ -203,12 +210,14 @@ internal class SmsContentResolver @Inject constructor(
 
     private fun findMessages(
         uri: String,
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         dateInMillis: Long? = null
     ): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         val columnsFilter = MessageQueryBuilder()
-            .addQuery(TextBodyQuery(text = text, columnName = COLUMN_SMS_BODY))
+            .addQuery(ExactTextQuery(text = exactText, columnName = COLUMN_SMS_BODY))
+            .addQuery(ContainsTextQuery(text = containsText, columnName = COLUMN_SMS_BODY))
             .addQuery(AfterDateQuery(dateMillis = dateInMillis, columnName = COLUMN_SMS_DATE_RECEIVED))
             .build()
 

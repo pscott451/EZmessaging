@@ -17,6 +17,7 @@
 package com.google.android.mms.pdu_google;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -1525,7 +1526,7 @@ public class PduPersister {
         if (excludeMyNumber && array.length == 1 && addressType == PduHeaders.TO) {
             return;
         }
-        String myNumber = excludeMyNumber ? mTelephonyManager.getLine1Number() : null;
+        @SuppressLint("MissingPermission") String myNumber = excludeMyNumber ? mTelephonyManager.getLine1Number() : null;
         for (EncodedStringValue v : array) {
             if (v != null) {
                 String number = v.getString();
