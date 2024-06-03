@@ -16,6 +16,7 @@
 
 package com.android.mms.service;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -295,7 +296,7 @@ public abstract class MmsRequest {
         if (Utils.isMmsOverWifiEnabled(context)) {
             ConnectivityManager mConnMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (mConnMgr != null) {
-                NetworkInfo niWF = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                @SuppressLint("MissingPermission") NetworkInfo niWF = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
                 if ((niWF != null) && (niWF.isConnected())) {
                     return true;
                 }
