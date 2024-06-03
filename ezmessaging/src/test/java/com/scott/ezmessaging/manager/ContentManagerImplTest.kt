@@ -269,11 +269,11 @@ class ContentManagerImplTest {
         // Given
         val smsMessages = MessageUtils.buildSmsMessage()
         val mmsMessages = MessageUtils.buildMmsMessage()
-        every { smsManager.findMessages("text", 1L) } returns listOf(smsMessages)
-        every { mmsManager.findMessages("text", 1L) } returns listOf(mmsMessages)
+        every { smsManager.findMessages(exactText = "text", containsText = "text", afterDateMillis = 1L) } returns listOf(smsMessages)
+        every { mmsManager.findMessages(exactText = "text", containsText = "text", afterDateMillis = 1L) } returns listOf(mmsMessages)
 
         // When
-        val messages = contentManager.getMessagesByParams("text", 1L)
+        val messages = contentManager.getMessagesByParams(exactText = "text", containsText = "text", afterDateMillis = 1L)
 
         // Then
         messages.shouldBe(listOf(mmsMessages, smsMessages))

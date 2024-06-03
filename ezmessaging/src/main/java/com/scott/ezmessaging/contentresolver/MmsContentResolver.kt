@@ -7,8 +7,9 @@ import android.net.Uri
 import android.util.Log
 import com.scott.ezmessaging.BuildConfig
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.AfterDateQuery
+import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ContainsTextQuery
+import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ExactTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
-import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.TextBodyQuery
 import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
@@ -64,12 +65,14 @@ internal class MmsContentResolver @Inject constructor(
     /**
      * @return a list of messages that match the provided params, if they exist.
      * @param messageIds A set of message ids. Matches the ids returned from the [COLUMN_MMS_ID] column.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
         messageIds: Set<String>? = null,
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
     ): List<MmsMessage> {
         var messages = listOf<MmsMessage>()
@@ -77,7 +80,7 @@ internal class MmsContentResolver @Inject constructor(
             val contentMap: Map<String, List<ContentMetadata>>
             val addressMap: Map<String, AddressMetadata>
             val metadataMap: Map<String, MessageMetadata>
-            if (text == null && afterDateMillis != null) {
+            if (exactText == null && containsText == null && afterDateMillis != null) {
                 // If searching by date, we need to get the metadata first since that's where the date columns live.
                 val metadataFilters = buildMetadataQuery(
                     afterDateMillis = afterDateMillis,
@@ -91,7 +94,8 @@ internal class MmsContentResolver @Inject constructor(
                 addressMap = getMessageAddresses(addressFilters)
             } else {
                 val contentFilters = buildContentQuery(
-                    text = text,
+                    exactText = exactText,
+                    containsText = containsText,
                     messageIds = messageIds
                 )
                 contentMap = getMessageContent(contentFilters)
@@ -363,10 +367,12 @@ internal class MmsContentResolver @Inject constructor(
         .build()
 
     private fun buildContentQuery(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         messageIds: Set<String>? = null
     ) = MessageQueryBuilder()
-        .addQuery(TextBodyQuery(text = text, columnName = COLUMN_MMS_TEXT))
+        .addQuery(ExactTextQuery(text = exactText, columnName = COLUMN_MMS_TEXT))
+        .addQuery(ContainsTextQuery(text = containsText, columnName = COLUMN_MMS_TEXT))
         .addQuery(MessageIdsQuery(ids = messageIds, columnName = COLUMN_MMS_MID))
         .build()
 

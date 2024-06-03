@@ -46,13 +46,19 @@ internal class SmsManager @Inject constructor(
 
     /**
      * @return a list of [SmsMessage] that match the provided params, if they exist.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
-    ): List<Message> = smsContentResolver.findMessages(text = text, afterDateMillis = afterDateMillis)
+    ): List<Message> = smsContentResolver.findMessages(
+        exactText = exactText,
+        containsText = containsText,
+        afterDateMillis = afterDateMillis
+    )
 
     /**
      * Handles receiving a message.
