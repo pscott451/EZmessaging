@@ -8,8 +8,6 @@ import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.model.MessageData
 import com.scott.ezmessaging.model.MessageReceiveResult
 import com.scott.ezmessaging.model.MessageSendResult
-import com.scott.ezmessaging.provider.DispatcherProvider
-import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,13 +28,19 @@ internal class MmsManager @Inject constructor(
 
     /**
      * @return a list of [MmsMessage] that match the provided params, if they exist.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
-    ): List<Message> = mmsContentResolver.findMessages(text = text, afterDateMillis = afterDateMillis)
+    ): List<Message> = mmsContentResolver.findMessages(
+        exactText = exactText,
+        containsText = containsText,
+        afterDateMillis = afterDateMillis
+    )
 
     /**
      * Handles receiving a message from another device.

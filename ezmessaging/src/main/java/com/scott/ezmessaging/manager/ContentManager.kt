@@ -84,11 +84,13 @@ interface ContentManager {
 
     /**
      * @return a list of messages, SMS and MMS, that match the provided params, if they exist.
-     * @param text The text content of the message.
+     * @param exactText returns any messages that match the provided text exactly.
+     * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     suspend fun getMessagesByParams(
-        text: String? = null,
+        exactText: String? = null,
+        containsText: String? = null,
         afterDateMillis: Long? = null
     ): List<Message>
 

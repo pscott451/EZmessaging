@@ -117,12 +117,13 @@ internal class ContentManagerImpl(
         }
 
     override suspend fun getMessagesByParams(
-        text: String?,
+        exactText: String?,
+        containsText: String?,
         afterDateMillis: Long?,
     ): List<Message>  = suspendCoroutine { continuation ->
         coroutineScope.launch {
-            val mmsMessages = async { mmsManager.findMessages(text = text, afterDateMillis = afterDateMillis) }
-            val smsMessages = async { smsManager.findMessages(text = text, afterDateMillis = afterDateMillis) }
+            val mmsMessages = async { mmsManager.findMessages(exactText = exactText, containsText = containsText, afterDateMillis = afterDateMillis) }
+            val smsMessages = async { smsManager.findMessages(exactText = exactText, containsText = containsText, afterDateMillis = afterDateMillis) }
             continuation.resume(mmsMessages.await() + smsMessages.await())
         }
     }

@@ -44,10 +44,10 @@ class MmsManagerTest {
         // Given
         val text = "text"
         val afterDate = 1L
-        coEvery { mmsContentResolver.findMessages(text = text, afterDateMillis = afterDate) } returns listOf(MessageUtils.buildMmsMessage())
+        coEvery { mmsContentResolver.findMessages(exactText = text, afterDateMillis = afterDate) } returns listOf(MessageUtils.buildMmsMessage())
 
         // When
-        val messages = mmsManager.findMessages(text = text, afterDateMillis = afterDate)
+        val messages = mmsManager.findMessages(exactText = text, afterDateMillis = afterDate)
 
         // Then
         messages.shouldBe(listOf(MessageUtils.buildMmsMessage()))
