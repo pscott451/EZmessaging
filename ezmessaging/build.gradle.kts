@@ -53,7 +53,7 @@ dependencies {
 
     // Hilt
     kapt(libs.hilt.compiler)
-    implementation(libs.hilt)
+    api(libs.hilt)
 
     // OKHttp
     implementation(libs.okhttp)
