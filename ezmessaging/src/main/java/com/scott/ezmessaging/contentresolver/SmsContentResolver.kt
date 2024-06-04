@@ -124,8 +124,8 @@ internal class SmsContentResolver @Inject constructor(
         containsText: String? = null,
         afterDateMillis: Long? = null
     ): List<SmsMessage> {
-        val outboxMessages = findMessages(CONTENT_SMS_OUTBOX, exactText, containsText, afterDateMillis)
-        val inboxMessages = findMessages(CONTENT_SMS_INBOX, exactText, containsText, afterDateMillis)
+        val outboxMessages = findMessagesByParams(CONTENT_SMS_OUTBOX, exactText, containsText, afterDateMillis)
+        val inboxMessages = findMessagesByParams(CONTENT_SMS_INBOX, exactText, containsText, afterDateMillis)
         return outboxMessages + inboxMessages
     }
 
@@ -143,7 +143,7 @@ internal class SmsContentResolver @Inject constructor(
                 put(COLUMN_SMS_ADDRESS, address)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessages(
+            insertedMessage = findMessagesByParams(
                 uri = CONTENT_SMS_OUTBOX,
                 exactText = body,
                 dateInMillis = dateSent
@@ -166,7 +166,7 @@ internal class SmsContentResolver @Inject constructor(
                 put(COLUMN_SMS_DATE_RECEIVED, dateReceived)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessages(CONTENT_SMS_INBOX, body, dateReceived).first()
+            insertedMessage = findMessagesByParams(uri = CONTENT_SMS_INBOX, exactText = body, dateInMillis = dateReceived).first()
         }.onFailure { logError(it) }
         return insertedMessage
     }
@@ -208,7 +208,7 @@ internal class SmsContentResolver @Inject constructor(
         return false
     }
 
-    private fun findMessages(
+    private fun findMessagesByParams(
         uri: String,
         exactText: String? = null,
         containsText: String? = null,
