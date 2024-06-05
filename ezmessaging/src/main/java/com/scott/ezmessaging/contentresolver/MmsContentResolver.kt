@@ -14,7 +14,6 @@ import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.extension.printAllColumns
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
 import com.scott.ezmessaging.manager.DeviceManager
@@ -257,16 +256,11 @@ internal class MmsContentResolver @Inject constructor(
                         if (it.senderAddress == null) {
                             it.senderAddress = senderAddress
                         }
-                        if (address != deviceManager.getThisDeviceMainNumber()) it.participants.add(address)
+                        it.participants.add(address)
                     } ?: run {
-                        val participants = if (address == deviceManager.getThisDeviceMainNumber()) {
-                            mutableSetOf()
-                        } else {
-                            mutableSetOf(address)
-                        }
                         messageIdToAddresses[id] = AddressMetadata(
                             senderAddress = senderAddress,
-                            participants = participants
+                            participants = mutableSetOf(address)
                         )
                     }
                 }

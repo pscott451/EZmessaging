@@ -7,6 +7,10 @@ object PduUtils {
         oldMap: HashMap<Int, Array<EncodedStringValue>?>,
         myNumber: String?
     ): HashMap<Int, Array<EncodedStringValue>?> {
+        if (oldMap.isNotEmpty() && oldMap[PduHeaders.FROM]?.isNotEmpty() == true && oldMap[PduHeaders.FROM]?.get(0)?.string == myNumber) {
+            // Sending a message to self. Just return original map.
+            return oldMap
+        }
         val newMap = hashMapOf<Int, Array<EncodedStringValue>?>()
         newMap[PduHeaders.FROM] = oldMap[PduHeaders.FROM]
         newMap[PduHeaders.TO] = oldMap[PduHeaders.TO]?.filter { it.string == myNumber }?.toTypedArray()
