@@ -41,11 +41,10 @@ android {
             }
         }
     }
-    useLibrary("org.apache.http.legacy")
 }
 
 dependencies {
-    //implementation(project(":google"))
+    implementation(project(":google"))
 
     // Android Core
     implementation(libs.androidx.core.ktx)
@@ -92,7 +91,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "1.2.0"
+            version = "1.2.1"
 
             afterEvaluate {
                 from(components["release"])

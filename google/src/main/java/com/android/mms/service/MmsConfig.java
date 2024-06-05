@@ -27,7 +27,7 @@ import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
-import com.scott.ezmessaging.R;
+import com.scott.google.R;
 
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
