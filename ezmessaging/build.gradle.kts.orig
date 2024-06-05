@@ -1,22 +1,19 @@
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
-    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.jetbrainsKotlinKapt)
     alias(libs.plugins.hilt)
     alias(libs.plugins.junit5)
+    `maven-publish`
 }
 
 android {
+    namespace = "com.scott.ezmessaging"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.scott.app"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,8 +25,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-        debug {
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -38,54 +33,31 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-    buildFeatures {
-        compose = true
-        buildFeatures.buildConfig = true
+    publishing {
+        publishing {
+            singleVariant("release") {
+                withSourcesJar()
+                withJavadocJar()
+            }
+        }
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.13"
-    }
-    namespace = "com.scott.app"
+    useLibrary("org.apache.http.legacy")
 }
 
 dependencies {
-    //implementation(libs.ezmessaging)
-    implementation(project(":ezmessaging"))
+    //implementation(project(":google"))
 
     // Android Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.coroutines)
 
-    // Coil (Displaying Gifs)
-    implementation(libs.coil.compose)
-    implementation(libs.coil.gif)
-
-    // Compose
-    val composeBom = platform(libs.androidx.compose.bom)
-    implementation(composeBom)
-    androidTestImplementation(composeBom)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    debugImplementation(libs.androidx.ui.tooling)
-    implementation(libs.androidx.ui.tooling.preview)
-    debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.androidx.compose.constraintlayout)
-    implementation(libs.androidx.compose.activity)
-    implementation(libs.androidx.lifecycle.viewmodelcompose)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-
     // Hilt
     kapt(libs.hilt.compiler)
-    implementation(libs.hilt)
+    api(libs.hilt)
 
-    // Moshi
-    kapt(libs.moshi.codegen)
-    implementation(libs.moshi)
-
-    // Retrofit
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter)
+    // OKHttp
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.urlconnection)
 
     // Unit Test
     testImplementation(libs.test.turbine)
@@ -113,4 +85,22 @@ dependencies {
     api(libs.sharedtest.kotest.api)
     api(libs.sharedtest.kotest.core)
     api(libs.sharedtest.kotest.shared)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.github.pscott451"
+            artifactId = "EZmessaging"
+<<<<<<< HEAD
+            version = "1.2.0"
+=======
+            version = "1.1.1"
+>>>>>>> master
+
+            afterEvaluate {
+                from(components["release"])
+            }
+        }
+    }
 }
