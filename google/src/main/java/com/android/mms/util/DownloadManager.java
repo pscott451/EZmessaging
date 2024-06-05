@@ -36,7 +36,7 @@ import com.google.android.mms.MmsException;
 import com.google.android.mms.pdu_google.EncodedStringValue;
 import com.google.android.mms.pdu_google.NotificationInd;
 import com.google.android.mms.pdu_google.PduPersister;
-import com.scott.ezmessaging.R;
+import com.scott.google.R;
 
 public class DownloadManager {
     private static final String TAG = LogTag.TAG;
