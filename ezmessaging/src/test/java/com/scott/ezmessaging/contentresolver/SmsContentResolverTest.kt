@@ -41,7 +41,7 @@ class SmsContentResolverTest {
                 dateSent = 1711491254000,
                 dateReceived = 1711491255707,
                 hasBeenRead = true,
-                participants = setOf("49878"),
+                participants = setOf("49878", "5555555555"),
                 text = "All or part of your Samsung order #SA131757595 was delivered. Thank you for choosing Samsung."
             ),
             Message.SmsMessage(
@@ -51,7 +51,7 @@ class SmsContentResolverTest {
                 dateSent = 1711480911000,
                 dateReceived = 1711480912446,
                 hasBeenRead = true,
-                participants = setOf("8336430251"),
+                participants = setOf("8336430251", "5555555555"),
                 text = "A package is ready for pickup at Package Concierge."
             )
         )
@@ -85,7 +85,7 @@ class SmsContentResolverTest {
                 dateSent = 1710442650402,
                 dateReceived = 1710442650402,
                 hasBeenRead = true,
-                participants = setOf("2222222222"),
+                participants = setOf("2222222222", "5555555555"),
                 text = "Hope you bought me a pie"
             )
         )
