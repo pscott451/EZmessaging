@@ -248,8 +248,8 @@ internal class MmsContentResolver @Inject constructor(
         )?.let { cursor ->
             while (cursor.moveToNext()) {
                 val msgId = cursor.getColumnValue(COLUMN_MMS_MESSAGE_ID)
-                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS)
-                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address else null
+                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS).asUSPhoneNumber()
+                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address.asUSPhoneNumber() else null
 
                 msgId?.let { id ->
                     messageIdToAddresses[id]?.let {

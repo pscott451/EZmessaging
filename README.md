@@ -1,5 +1,7 @@
 # EZmessaging
 
+A library used to send, receive, and query existing SMS and MMS messages.
+
 ## Setup
 - The minSdk is `26`
 - Add the Jitpack repository to your build file

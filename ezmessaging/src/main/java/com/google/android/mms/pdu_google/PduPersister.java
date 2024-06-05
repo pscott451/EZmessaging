@@ -1275,11 +1275,13 @@ public class PduPersister {
      *  to create the associated thread. When false, only the sender will be used in finding or
      *  creating the appropriate thread or conversation.
      * @param preOpenedFiles if not null, a map of preopened InputStreams for the parts.
+     * @param remapAddressTypes if true, sets all the "TO" recipients, except for mine, to "CC". Should only be used when receiving messages.
      * @return A Uri which can be used to access the stored PDU.
      */
 
+    @SuppressLint("MissingPermission")
     public Uri persist(GenericPdu pdu, Uri uri, boolean createThreadId, boolean groupMmsEnabled,
-                       HashMap<Uri, InputStream> preOpenedFiles, int subscriptionId)
+                       HashMap<Uri, InputStream> preOpenedFiles, int subscriptionId, boolean remapAddressTypes)
             throws MmsException {
         if (uri == null) {
             throw new MmsException("Uri may not be null.");
@@ -1370,6 +1372,10 @@ public class PduPersister {
                 array = header.getEncodedStringValues(addrType);
             }
             addressMap.put(addrType, array);
+        }
+        if (remapAddressTypes) {
+            // Rebuild address map. The device number should be the only one that's PduHeaders.TO. All else should be PduHeaders.CC
+            addressMap = PduUtils.remakeAddressMap(addressMap, mTelephonyManager.getLine1Number());
         }
 
         HashSet<String> recipients = new HashSet<String>();

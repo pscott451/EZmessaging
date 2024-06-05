@@ -96,7 +96,7 @@ internal class GoogleManager @Inject constructor(
                     findThreadId(context, pdu, messageType)?.let { threadId ->
                         val uri = persister.persist(
                             pdu, Uri.parse("content://mms/inbox"), true,
-                            true, null, subscriptionID
+                            true, null, subscriptionID, false
                         );
                         // Update thread ID for ReadOrigInd & DeliveryInd.
                         val values = ContentValues(1).apply {
@@ -142,7 +142,8 @@ internal class GoogleManager @Inject constructor(
                             false,
                             true,
                             null,
-                            subscriptionID
+                            subscriptionID,
+                            false
                         )
 
                         val downloadLocation = try {
@@ -275,7 +276,8 @@ internal class GoogleManager @Inject constructor(
                 true,
                 true,
                 null,
-                -1
+                -1,
+                false
             )
 
             val writerUri = Uri.Builder()

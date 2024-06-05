@@ -49,8 +49,8 @@ android {
 }
 
 dependencies {
-    implementation(libs.ezmessaging)
-    //implementation(project(":ezmessaging"))
+    //implementation(libs.ezmessaging)
+    implementation(project(":ezmessaging"))
 
     // Android Core
     implementation(libs.androidx.core.ktx)

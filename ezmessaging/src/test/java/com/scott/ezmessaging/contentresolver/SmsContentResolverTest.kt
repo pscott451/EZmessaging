@@ -2,9 +2,9 @@ package com.scott.ezmessaging.contentresolver
 
 import android.content.ContentResolver
 import android.content.Context
+import com.scott.ezmessaging.extension.getCursor
 import com.scott.ezmessaging.manager.DeviceManager
 import com.scott.ezmessaging.model.Message
-import com.scott.ezmessaging.extension.getCursor
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk

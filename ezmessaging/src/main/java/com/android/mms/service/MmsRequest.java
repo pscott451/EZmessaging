@@ -30,7 +30,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.service.carrier.CarrierMessagingService;
 import android.telephony.SmsManager;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.android.mms.service.exception.ApnException;
@@ -88,8 +87,6 @@ public abstract class MmsRequest {
     // MMS config overrides
     protected Bundle mMmsConfigOverrides;
 
-    private boolean mobileDataEnabled;
-
     public MmsRequest(RequestManager requestManager, int subId, String creator,
                       Bundle configOverrides) {
         mRequestManager = requestManager;
@@ -125,14 +122,10 @@ public abstract class MmsRequest {
                 Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
     }
 
-    private static boolean isMobileDataEnabled(final Context context, final int subId) {
-        final TelephonyManager telephonyManager =
-                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        return Utils.isDataEnabled(telephonyManager, subId);
-    }
-
-    private static boolean isDataNetworkAvailable(final Context context, final int subId) {
-        return !inAirplaneMode(context) && isMobileDataEnabled(context, subId);
+    private static Boolean isDataNetworkAvailable(final Context context, final int subId) {
+        Boolean isMobileDataEnabled = DataUtils.mobileDataEnabled(context);
+        if (isMobileDataEnabled == null) return null;
+        return !inAirplaneMode(context) && isMobileDataEnabled;
     }
 
     /**
@@ -153,21 +146,13 @@ public abstract class MmsRequest {
             wifi.setWifiEnabled(false);
         }
 
-        mobileDataEnabled = Utils.isMobileDataEnabled(context);
-        Log.v(TAG, "mobile data enabled: " + mobileDataEnabled);
-
-        if (!mobileDataEnabled && !useWifi(context)) {
-            Log.v(TAG, "mobile data not enabled, so forcing it to enable");
-            Utils.setMobileDataEnabled(context, true);
-        }
-
         if (!ensureMmsConfigLoaded()) { // Check mms config
             Log.e(TAG, "MmsRequest: mms config is not loaded yet");
             result = SmsManager.MMS_ERROR_CONFIGURATION_ERROR;
         } else if (!prepareForHttpRequest()) { // Prepare request, like reading pdu data from user
             Log.e(TAG, "MmsRequest: failed to prepare for request");
             result = SmsManager.MMS_ERROR_IO_ERROR;
-        } else if (!isDataNetworkAvailable(context, mSubId)) {
+        } else if (isDataNetworkAvailable(context, mSubId) == false) {
             Log.e(TAG, "MmsRequest: in airplane mode or mobile data disabled");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
                 result = SmsManager.MMS_ERROR_NO_DATA_NETWORK;
@@ -234,11 +219,6 @@ public abstract class MmsRequest {
             }
         }
 
-        if (!mobileDataEnabled) {
-            Log.v(TAG, "setting mobile data back to disabled");
-            Utils.setMobileDataEnabled(context, false);
-        }
-
         if (!useWifi(context)) {
             wifi.setWifiEnabled(isWifiEnabled);
         }
@@ -293,7 +273,7 @@ public abstract class MmsRequest {
      * are we set up to use wifi? if so, send mms over it.
      */
     public static boolean useWifi(Context context) {
-        if (Utils.isMmsOverWifiEnabled(context)) {
+        if (DataUtils.mmsOverWifiEnabled(context)) {
             ConnectivityManager mConnMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             if (mConnMgr != null) {
                 @SuppressLint("MissingPermission") NetworkInfo niWF = mConnMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
