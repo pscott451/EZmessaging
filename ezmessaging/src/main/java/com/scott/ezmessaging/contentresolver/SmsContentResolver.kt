@@ -66,7 +66,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(address.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(address.asUSPhoneNumber()!!)
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -104,7 +104,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(sentToAddress.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(sentToAddress.asUSPhoneNumber()!!)
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -248,7 +248,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(sentToAddress.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(sentToAddress.asUSPhoneNumber()!!)
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }

@@ -14,6 +14,7 @@ import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
+import com.scott.ezmessaging.extension.printAllColumns
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
 import com.scott.ezmessaging.manager.DeviceManager
@@ -248,19 +249,24 @@ internal class MmsContentResolver @Inject constructor(
         )?.let { cursor ->
             while (cursor.moveToNext()) {
                 val msgId = cursor.getColumnValue(COLUMN_MMS_MESSAGE_ID)
-                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS)
-                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address else null
+                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS).asUSPhoneNumber()
+                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address.asUSPhoneNumber() else null
 
                 msgId?.let { id ->
                     messageIdToAddresses[id]?.let {
                         if (it.senderAddress == null) {
                             it.senderAddress = senderAddress
                         }
-                        it.participants.add(address)
+                        if (address != deviceManager.getThisDeviceMainNumber()) it.participants.add(address)
                     } ?: run {
+                        val participants = if (address == deviceManager.getThisDeviceMainNumber()) {
+                            mutableSetOf()
+                        } else {
+                            mutableSetOf(address)
+                        }
                         messageIdToAddresses[id] = AddressMetadata(
                             senderAddress = senderAddress,
-                            participants = mutableSetOf(address)
+                            participants = participants
                         )
                     }
                 }

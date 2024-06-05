@@ -174,7 +174,8 @@ public class DownloadRequest extends MmsRequest {
                     true/*createThreadId*/,
                     true/*groupMmsEnabled*/,
                     null/*preOpenedFiles*/,
-                    subId);
+                    subId,
+                    true);
             if (messageUri == null) {
                 Log.e(TAG, "DownloadRequest.persistIfRequired: can not persist message");
                 return null;

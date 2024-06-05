@@ -34,7 +34,6 @@ import java.util.regex.Pattern;
 /**
  * Common methods to be used for data connectivity/sending messages ect
  *
- * @author Jake Klinker
  */
 // TODO make this my own
 public class Utils {
