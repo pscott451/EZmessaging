@@ -50,6 +50,7 @@ class MmsViewModel @Inject constructor(
         contentManager.sendMmsMessage(
             message = messageData,
             recipients = recipients,
+            onMessageCreated = { },
             onSent = { sendResult ->
                 if (sendResult is MessageSendResult.Failed) {
                     _sendingInProgress.value = false

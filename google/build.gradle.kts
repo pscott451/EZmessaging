@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.okhttp.urlconnection)
 }
 
+/*
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -63,4 +64,4 @@ publishing {
             }
         }
     }
-}
+}*/

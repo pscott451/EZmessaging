@@ -59,6 +59,7 @@ interface ContentManager {
      * Sends an sms message.
      * @param address the recipient address.
      * @param text the text.
+     * @param onMessageCreated invoked with the created [SmsMessage]. If null, there was an error inserting the message into the database.
      * @param onSent invoked with [MessageSendResult.Success] if the message was successfully sent.
      * @param onDelivered invoked with true if the message was successfully delivered to the recipient. Depending
      * on the carrier, this may not always be available.
@@ -66,6 +67,7 @@ interface ContentManager {
     fun sendSmsMessage(
         address: String,
         text: String,
+        onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     )
@@ -74,11 +76,13 @@ interface ContentManager {
      * Sends an mms message.
      * @param message The [MessageData] to send.
      * @param recipients a list of recipients.
+     * @param onMessageCreated invoked with the created [MmsMessage]. If null, there was an error inserting the message into the database.
      * @param onSent invoked with [MessageSendResult.Success] if the message was successfully sent.
      */
     fun sendMmsMessage(
         message: MessageData,
         recipients: Array<String>,
+        onMessageCreated: (MmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit
     )
 

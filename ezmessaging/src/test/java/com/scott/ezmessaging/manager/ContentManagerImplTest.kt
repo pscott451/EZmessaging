@@ -197,10 +197,10 @@ class ContentManagerImplTest {
         val text = "text"
 
         // When
-        contentManager.sendSmsMessage(address, text, {}, {})
+        contentManager.sendSmsMessage(address, text, {}, {}, {})
 
         // Then
-        verify { smsManager.sendMessage(address, text, any(), any()) }
+        verify { smsManager.sendMessage(address, text, any(), any(), any()) }
     }
 
     @Test
@@ -210,10 +210,10 @@ class ContentManagerImplTest {
         val recipients = arrayOf("5555555555")
 
         // When
-        contentManager.sendMmsMessage(messageData, recipients, {})
+        contentManager.sendMmsMessage(messageData, recipients, {}, {})
 
         // Then
-        verify { mmsManager.sendMessage(messageData, recipients, any()) }
+        verify { mmsManager.sendMessage(messageData, recipients, any(), any()) }
     }
 
     @Test

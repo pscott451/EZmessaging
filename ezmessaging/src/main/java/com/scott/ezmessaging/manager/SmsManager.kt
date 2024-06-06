@@ -79,6 +79,7 @@ internal class SmsManager @Inject constructor(
     fun sendMessage(
         address: String,
         text: String,
+        onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
@@ -86,6 +87,7 @@ internal class SmsManager @Inject constructor(
             onSent.invoke(MessageSendResult.Failed("Address and text cannot be empty"))
         } else {
             val insertedMessage = smsContentResolver.insertSentMessage(address, text)
+            onMessageCreated(insertedMessage)
             val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
             val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
                 onDelivered(isSuccess)

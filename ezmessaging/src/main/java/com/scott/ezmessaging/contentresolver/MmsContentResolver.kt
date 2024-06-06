@@ -117,7 +117,8 @@ internal class MmsContentResolver @Inject constructor(
      * @param messageUri the exact location the message should reside.
      * @return The message if it exists. Otherwise, null
      */
-    fun findMessageByUri(messageUri: Uri): MmsMessage? {
+    fun findMessageByUri(messageUri: Uri?): MmsMessage? {
+        if (messageUri == null) return null
         runCatching {
             contentResolver.getCursor(
                 messageUri,

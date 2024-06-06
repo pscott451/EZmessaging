@@ -91,7 +91,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "com.github.pscott451"
             artifactId = "EZmessaging"
-            version = "1.2.1"
+            version = "1.2.2"
 
             afterEvaluate {
                 from(components["release"])
