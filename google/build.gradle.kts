@@ -51,17 +51,16 @@ dependencies {
     implementation(libs.okhttp.urlconnection)
 }
 
-/*
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaginggoogle"
-            version = "1.0.0"
+            groupId = Jitpack.GROUP_ID
+            artifactId = Jitpack.EZ_MESSAGING_GOOGLE_ARTIFACT_ID
+            version = Jitpack.VERSION
 
             afterEvaluate {
                 from(components["release"])
             }
         }
     }
-}*/
+}
