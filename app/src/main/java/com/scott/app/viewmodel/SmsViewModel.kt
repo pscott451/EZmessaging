@@ -45,9 +45,9 @@ class SmsViewModel @Inject constructor(
                     makeToast(sendResult.errorMessage)
                 }
             },
-            onDelivered = { wasDelivered ->
+            onDelivered = { message ->
                 _sendingInProgress.value = false
-                if (wasDelivered) makeToast(context.getString(R.string.sendSms_messagedelivered))
+                message?.let { makeToast(context.getString(R.string.sendSms_messagedelivered)) }
             }
         )
     }

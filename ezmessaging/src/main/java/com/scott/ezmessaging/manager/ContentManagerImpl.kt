@@ -79,7 +79,7 @@ internal class ContentManagerImpl(
         text: String,
         onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
-        onDelivered: (Boolean) -> Unit
+        onDelivered: (SmsMessage?) -> Unit
     ) {
         coroutineScope.launch {
             smsManager.sendMessage(

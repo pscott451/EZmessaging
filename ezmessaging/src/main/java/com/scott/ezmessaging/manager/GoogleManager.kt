@@ -42,7 +42,6 @@ import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTEN
 import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
 import com.scott.ezmessaging.model.GoogleProcessResult
 import com.scott.ezmessaging.model.MessageData
-import com.scott.ezmessaging.model.MessageSendResult
 import com.scott.ezmessaging.receiver.MmsFileProvider
 import com.scott.ezmessaging.receiver.MmsSentBroadcastReceiver
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -197,7 +196,7 @@ internal class GoogleManager @Inject constructor(
         fromAddress: String,
         recipients: Array<String>,
         onInsertedIntoDatabase: (Uri?) -> Unit,
-        onSent: (MessageSendResult) -> Unit
+        onSent: (Uri?, Exception?) -> Unit
     ) {
         try {
             val mmsPart = when (message) {
@@ -217,7 +216,7 @@ internal class GoogleManager @Inject constructor(
                         sendMmsMessage(it, fromAddress, recipients, onInsertedIntoDatabase, onSent)
                     } ?: run {
                         onInsertedIntoDatabase(null)
-                        onSent(MessageSendResult.Failed("Failed to decode the image from the provided uri"))
+                        onSent(null, Exception("Failed to decode the image from the provided uri"))
                     }
                     return
                 }
@@ -234,17 +233,17 @@ internal class GoogleManager @Inject constructor(
                     when {
                         imageByteArray == null -> {
                             onInsertedIntoDatabase(null)
-                            onSent(MessageSendResult.Failed("Failed to convert the bitmap to a byte array"))
+                            onSent(null, Exception("Failed to convert the bitmap to a byte array"))
                             return
                         }
                         imageByteArray.size > ONE_MEGA_BYTE -> {
                             onInsertedIntoDatabase(null)
-                            onSent(MessageSendResult.Failed("Image too large to send. Size after max compression: ${imageByteArray.size}"))
+                            onSent(null, Exception("Image too large to send. Size after max compression: ${imageByteArray.size}"))
                             return
                         }
                         !isValidType -> {
                             onInsertedIntoDatabase(null)
-                            onSent(MessageSendResult.Failed("Invalid message type: ${message.mimeType}"))
+                            onSent(null, Exception("Invalid message type: ${message.mimeType}"))
                             return
                         }
                         else -> {
@@ -260,7 +259,7 @@ internal class GoogleManager @Inject constructor(
                 is MessageData.Text -> {
                     if (message.text.isEmpty()) {
                         onInsertedIntoDatabase(null)
-                        onSent(MessageSendResult.Failed("Message cannot be empty"))
+                        onSent(null, Exception("Message cannot be empty"))
                         return
                     }
                     MMSPart().apply {
@@ -311,11 +310,11 @@ internal class GoogleManager @Inject constructor(
             }
 
             writerUri?.let {
-                val sentIntent = MmsSentBroadcastReceiver().buildPendingIntent(context) { sendResult ->
-                    if (sendResult is MessageSendResult.Success) {
+                val sentIntent = MmsSentBroadcastReceiver().buildPendingIntent(context) { successfullySent ->
+                    if (successfullySent) {
+                        onSent(locationUri, null)
                         markTheMessageAsSent(context, locationUri)
                     }
-                    onSent(sendResult)
                     sendFile.delete()
                 }
                 val smsManager = context.getSystemService(SmsManager::class.java)
@@ -324,10 +323,10 @@ internal class GoogleManager @Inject constructor(
                     it, null, configOverrides, sentIntent
                 )
             } ?: run {
-                onSent(MessageSendResult.Failed("Writer URI was null"))
+                onSent(null, Exception("Writer URI was null"))
             }
         } catch (e: Exception) {
-            onSent(MessageSendResult.Failed("An error occurred sending the mms message: ${e.message}"))
+            onSent(null, Exception("An error occurred sending the mms message: ${e.message}"))
         }
     }
 
