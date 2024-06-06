@@ -73,8 +73,18 @@ internal class MmsManager @Inject constructor(
     fun sendMessage(
         message: MessageData,
         recipients: Array<String>,
+        onMessageCreated: (MmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit
-    ) = googleManager.sendMmsMessage(message, deviceManager.getThisDeviceMainNumber(), recipients, onSent)
+    ) {
+        googleManager.sendMmsMessage(
+            message = message,
+            fromAddress = deviceManager.getThisDeviceMainNumber(),
+            recipients = recipients,
+            onInsertedIntoDatabase = { location ->
+                onMessageCreated(mmsContentResolver.findMessageByUri(location))
+            },
+            onSent = onSent)
+    }
 
     /**
      * Marks a message with the provided [messageId] as read.

@@ -196,6 +196,7 @@ internal class GoogleManager @Inject constructor(
         message: MessageData,
         fromAddress: String,
         recipients: Array<String>,
+        onInsertedIntoDatabase: (Uri?) -> Unit,
         onSent: (MessageSendResult) -> Unit
     ) {
         try {
@@ -213,8 +214,9 @@ internal class GoogleManager @Inject constructor(
                         }
                     }
                     newMessageData?.let {
-                        sendMmsMessage(it, fromAddress, recipients, onSent)
+                        sendMmsMessage(it, fromAddress, recipients, onInsertedIntoDatabase, onSent)
                     } ?: run {
+                        onInsertedIntoDatabase(null)
                         onSent(MessageSendResult.Failed("Failed to decode the image from the provided uri"))
                     }
                     return
@@ -231,14 +233,17 @@ internal class GoogleManager @Inject constructor(
                     val isValidType = message.mimeType.isValidMessageType()
                     when {
                         imageByteArray == null -> {
+                            onInsertedIntoDatabase(null)
                             onSent(MessageSendResult.Failed("Failed to convert the bitmap to a byte array"))
                             return
                         }
                         imageByteArray.size > ONE_MEGA_BYTE -> {
+                            onInsertedIntoDatabase(null)
                             onSent(MessageSendResult.Failed("Image too large to send. Size after max compression: ${imageByteArray.size}"))
                             return
                         }
                         !isValidType -> {
+                            onInsertedIntoDatabase(null)
                             onSent(MessageSendResult.Failed("Invalid message type: ${message.mimeType}"))
                             return
                         }
@@ -254,6 +259,7 @@ internal class GoogleManager @Inject constructor(
 
                 is MessageData.Text -> {
                     if (message.text.isEmpty()) {
+                        onInsertedIntoDatabase(null)
                         onSent(MessageSendResult.Failed("Message cannot be empty"))
                         return
                     }
@@ -279,6 +285,8 @@ internal class GoogleManager @Inject constructor(
                 -1,
                 false
             )
+
+            onInsertedIntoDatabase(locationUri)
 
             val writerUri = Uri.Builder()
                 .authority(MmsFileProvider.getAuthority(context))

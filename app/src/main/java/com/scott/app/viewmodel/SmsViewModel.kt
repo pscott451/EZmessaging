@@ -38,6 +38,7 @@ class SmsViewModel @Inject constructor(
         contentManager.sendSmsMessage(
             address = recipient,
             text = message,
+            onMessageCreated = { },
             onSent = { sendResult ->
                 if (sendResult is MessageSendResult.Failed) {
                     _sendingInProgress.value = false

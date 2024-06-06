@@ -77,6 +77,7 @@ internal class ContentManagerImpl(
     override fun sendSmsMessage(
         address: String,
         text: String,
+        onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
         onDelivered: (Boolean) -> Unit
     ) {
@@ -84,6 +85,7 @@ internal class ContentManagerImpl(
             smsManager.sendMessage(
                 address = address,
                 text = text,
+                onMessageCreated = { resumeOnMainThread { onMessageCreated(it) } },
                 onSent = { resumeOnMainThread { onSent(it) } },
                 onDelivered = { resumeOnMainThread { onDelivered(it) } }
             )
@@ -93,12 +95,14 @@ internal class ContentManagerImpl(
     override fun sendMmsMessage(
         message: MessageData,
         recipients: Array<String>,
+        onMessageCreated: (MmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit
     ) {
         coroutineScope.launch {
             mmsManager.sendMessage(
                 message = message,
                 recipients = recipients,
+                onMessageCreated = { resumeOnMainThread { onMessageCreated(it) } },
                 onSent = { resumeOnMainThread { onSent(it) } }
             )
         }

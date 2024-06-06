@@ -73,10 +73,10 @@ class MmsManagerTest {
         every { deviceManager.getThisDeviceMainNumber() } returns "5555555555"
 
         // When
-        mmsManager.sendMessage(messageData, recipients, {})
+        mmsManager.sendMessage(messageData, recipients, {}, {})
 
         // Then
-        verify { googleManager.sendMmsMessage(messageData, "5555555555", recipients, any()) }
+        verify { googleManager.sendMmsMessage(messageData, "5555555555", recipients, any(), any()) }
     }
 
     @Test
