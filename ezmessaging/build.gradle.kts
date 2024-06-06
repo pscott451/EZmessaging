@@ -89,9 +89,9 @@ dependencies {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "com.github.pscott451"
-            artifactId = "EZmessaging"
-            version = "1.2.2"
+            groupId = Jitpack.GROUP_ID
+            artifactId = Jitpack.EZ_MESSAGING_ARTIFACT_ID
+            version = Jitpack.VERSION
 
             afterEvaluate {
                 from(components["release"])
