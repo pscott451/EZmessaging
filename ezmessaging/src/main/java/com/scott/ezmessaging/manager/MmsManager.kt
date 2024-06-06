@@ -83,7 +83,15 @@ internal class MmsManager @Inject constructor(
             onInsertedIntoDatabase = { location ->
                 onMessageCreated(mmsContentResolver.findMessageByUri(location))
             },
-            onSent = onSent)
+            onSent = { uri, exception ->
+                mmsContentResolver.findMessageByUri(uri)?.let { message ->
+                    onSent(MessageSendResult.Success(message))
+                } ?: run {
+                    val errorMessage = exception?.message ?: "An error occurred sending the mms message"
+                    onSent(MessageSendResult.Failed(errorMessage))
+                }
+            }
+        )
     }
 
     /**

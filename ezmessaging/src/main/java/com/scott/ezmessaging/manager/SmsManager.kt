@@ -81,16 +81,23 @@ internal class SmsManager @Inject constructor(
         text: String,
         onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
-        onDelivered: (Boolean) -> Unit
+        onDelivered: (SmsMessage?) -> Unit
     ) {
         if (address.isEmpty() || text.isEmpty()) {
             onSent.invoke(MessageSendResult.Failed("Address and text cannot be empty"))
         } else {
             val insertedMessage = smsContentResolver.insertSentMessage(address, text)
             onMessageCreated(insertedMessage)
-            val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context, onSent)
+            val sentIntent = SmsSentBroadcastReceiver().buildPendingIntent(context) { successfullySent ->
+                val sentMessage = smsContentResolver.findMessages(messageIds = setOf(insertedMessage?.messageId ?: "")).firstOrNull()
+                if (successfullySent && sentMessage != null) {
+                    onSent(MessageSendResult.Success(sentMessage))
+                } else {
+                    onSent.invoke(MessageSendResult.Failed("Failed to send. Do you have service?"))
+                }
+            }
             val deliveredIntent = SmsDeliveredBroadcastReceiver().buildPendingIntent(context) { isSuccess ->
-                onDelivered(isSuccess)
+                onDelivered(smsContentResolver.findMessages(messageIds = setOf(insertedMessage?.messageId ?: "")).firstOrNull())
                 if (isSuccess) markMessageAsDelivered(insertedMessage?.messageId)
             }
             systemSmsManager?.sendTextMessage(address, null, text, sentIntent, deliveredIntent) ?: run {

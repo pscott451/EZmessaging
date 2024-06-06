@@ -61,7 +61,7 @@ interface ContentManager {
      * @param text the text.
      * @param onMessageCreated invoked with the created [SmsMessage]. If null, there was an error inserting the message into the database.
      * @param onSent invoked with [MessageSendResult.Success] if the message was successfully sent.
-     * @param onDelivered invoked with true if the message was successfully delivered to the recipient. Depending
+     * @param onDelivered invoked with the delivered [SmsMessage] if the message was successfully delivered to the recipient. Depending
      * on the carrier, this may not always be available.
      */
     fun sendSmsMessage(
@@ -69,7 +69,7 @@ interface ContentManager {
         text: String,
         onMessageCreated: (SmsMessage?) -> Unit,
         onSent: (MessageSendResult) -> Unit,
-        onDelivered: (Boolean) -> Unit
+        onDelivered: (SmsMessage?) -> Unit
     )
 
     /**

@@ -115,17 +115,20 @@ internal class SmsContentResolver @Inject constructor(
 
     /**
      * @return a list of messages that match the provided params, if they exist.
+     * @return a list of messages that match the provided params, if they exist.
+     * @param messageIds A set of message ids. Matches the ids returned from the [COLUMN_SMS_ID] column.
      * @param exactText returns any messages that match the provided text exactly.
      * @param containsText returns any messages that contain the provided text.
      * @param afterDateMillis returns all messages after the date.
      */
     fun findMessages(
+        messageIds: Set<String>? = null,
         exactText: String? = null,
         containsText: String? = null,
         afterDateMillis: Long? = null
     ): List<SmsMessage> {
-        val outboxMessages = findMessagesByParams(CONTENT_SMS_OUTBOX, exactText, containsText, afterDateMillis)
-        val inboxMessages = findMessagesByParams(CONTENT_SMS_INBOX, exactText, containsText, afterDateMillis)
+        val outboxMessages = findMessagesByParams(CONTENT_SMS_OUTBOX, messageIds, exactText, containsText, afterDateMillis)
+        val inboxMessages = findMessagesByParams(CONTENT_SMS_INBOX, messageIds, exactText, containsText, afterDateMillis)
         return outboxMessages + inboxMessages
     }
 
@@ -210,12 +213,14 @@ internal class SmsContentResolver @Inject constructor(
 
     private fun findMessagesByParams(
         uri: String,
+        messageIds: Set<String>? = null,
         exactText: String? = null,
         containsText: String? = null,
         dateInMillis: Long? = null
     ): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         val columnsFilter = MessageQueryBuilder()
+            .addQuery(MessageIdsQuery(ids = messageIds, columnName = COLUMN_SMS_ID))
             .addQuery(ExactTextQuery(text = exactText, columnName = COLUMN_SMS_BODY))
             .addQuery(ContainsTextQuery(text = containsText, columnName = COLUMN_SMS_BODY))
             .addQuery(AfterDateQuery(dateMillis = dateInMillis, columnName = COLUMN_SMS_DATE_RECEIVED))

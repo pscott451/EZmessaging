@@ -7,13 +7,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
-import com.scott.ezmessaging.model.MessageSendResult
 
 internal class MmsSentBroadcastReceiver: BroadcastReceiver() {
 
     private val action = "${ACTION_PREFIX}_${System.currentTimeMillis()}"
 
-    fun buildPendingIntent(context: Context, onSent: (MessageSendResult) -> Unit): PendingIntent {
+    fun buildPendingIntent(context: Context, onSent: (Boolean) -> Unit): PendingIntent {
         val callbackId = System.currentTimeMillis()
         MmsSendCallbacks.sentCallbacks[callbackId] = onSent
         ContextCompat.registerReceiver(context, this, IntentFilter(action), ContextCompat.RECEIVER_NOT_EXPORTED)
@@ -28,12 +27,7 @@ internal class MmsSentBroadcastReceiver: BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context != null && intent != null) {
             val sendResultCallbackId = intent.getLongExtra(EXTRA_CALLBACK_ID, -1)
-            val sendResult = if (resultCode == Activity.RESULT_OK) {
-                MessageSendResult.Success
-            } else {
-                MessageSendResult.Failed("Failed to send. Result was: $resultCode")
-            }
-            MmsSendCallbacks.sentCallbacks[sendResultCallbackId] ?.invoke(sendResult)
+            MmsSendCallbacks.sentCallbacks[sendResultCallbackId] ?.invoke(resultCode == Activity.RESULT_OK)
             MmsSendCallbacks.sentCallbacks.remove(sendResultCallbackId)
             context.unregisterReceiver(this)
         }

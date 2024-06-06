@@ -12,6 +12,7 @@ sealed interface MessageSendResult {
 
     /**
      * The message was successfully sent.
+     * @property message the message that was sent.
      */
-    object Success: MessageSendResult
+    data class Success(val message: Message): MessageSendResult
 }
