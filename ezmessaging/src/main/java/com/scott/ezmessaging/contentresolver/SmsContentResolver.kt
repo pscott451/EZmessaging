@@ -237,23 +237,22 @@ internal class SmsContentResolver @Inject constructor(
                 runCatching {
                     val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
                     val threadId = cursor.getColumnValue(COLUMN_SMS_THREAD_ID)
-                    val sentToAddress = cursor.getColumnValue(COLUMN_SMS_ADDRESS)
+                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS).asUSPhoneNumber()!!
                     val dateSent = cursor.getColumnValue(COLUMN_SMS_DATE_SENT)
                     val dateReceived = cursor.getColumnValue(COLUMN_SMS_DATE_RECEIVED)
                     val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
                     val text = cursor.getColumnValue(COLUMN_SMS_BODY)
 
                     // I don't care about messages that don't have all the required info so forcing unwrapping.
-                    val myAddress = deviceManager.getThisDeviceMainNumber()
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = myAddress,
+                        senderAddress = recipient,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(sentToAddress.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(recipient, deviceManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
