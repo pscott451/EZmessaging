@@ -30,8 +30,9 @@ interface ContentManager {
 
     /**
      * Retrieves all of the existing [MmsMessage]/[SmsMessage].
+     * Invoked with the progress of completion. Will be a value between 0 and 1.
      */
-    suspend fun getAllMessages(): List<Message>
+    suspend fun getAllMessages(percentComplete: ((Float) -> Unit)? = null): List<Message>
 
     /**
      * Marks a [Message] as read.

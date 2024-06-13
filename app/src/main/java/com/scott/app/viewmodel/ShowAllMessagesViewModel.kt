@@ -29,7 +29,9 @@ class ShowAllMessagesViewModel @Inject constructor(
     private fun buildConversations() {
         viewModelScope.launch {
             val threadIdToMessagesMap = mutableMapOf<String, ArrayList<Message>>()
-            contentManager.getAllMessages().forEach {  message ->
+            contentManager.getAllMessages { percentComplete ->
+
+            }.forEach {  message ->
                 threadIdToMessagesMap[message.threadId]?.add(message) ?: run {
                     threadIdToMessagesMap[message.threadId] = arrayListOf(message)
                 }

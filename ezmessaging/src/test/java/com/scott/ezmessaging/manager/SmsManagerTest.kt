@@ -36,8 +36,8 @@ class SmsManagerTest {
         // Given
         val sentMessage = MessageUtils.buildSmsMessage("sent")
         val receivedMessage = MessageUtils.buildSmsMessage("received")
-        coEvery { smsContentResolver.getAllSentSmsMessages() } returns listOf(sentMessage)
-        coEvery { smsContentResolver.getAllReceivedSmsMessages() } returns listOf(receivedMessage)
+        coEvery { smsContentResolver.getAllSentSmsMessages(any()) } returns listOf(sentMessage)
+        coEvery { smsContentResolver.getAllReceivedSmsMessages(any()) } returns listOf(receivedMessage)
 
         // When
         val messages = smsManager.getAllMessages()

@@ -35,10 +35,24 @@ internal class SmsManager @Inject constructor(
     /**
      * Retrieve the messages from the database.
      */
-    suspend fun getAllMessages(): List<SmsMessage> = suspendCoroutine { continuation ->
+    suspend fun getAllMessages(
+        percentComplete: ((Float) -> Unit)? = null
+    ): List<SmsMessage> = suspendCoroutine { continuation ->
         coroutineScope.launch {
-            val sentMessagesDeferred = async { smsContentResolver.getAllSentSmsMessages() }
-            val receivedMessagesDeferred = async { smsContentResolver.getAllReceivedSmsMessages() }
+            var smsPercentLoaded = 0f
+            var mmsPercentLoaded = 0f
+            val sentMessagesDeferred = async {
+                smsContentResolver.getAllSentSmsMessages {
+                    smsPercentLoaded = it
+                    percentComplete?.invoke((smsPercentLoaded + mmsPercentLoaded) / 2)
+                }
+            }
+            val receivedMessagesDeferred = async {
+                smsContentResolver.getAllReceivedSmsMessages {
+                    mmsPercentLoaded = it
+                    percentComplete?.invoke((smsPercentLoaded + mmsPercentLoaded) / 2)
+                }
+            }
             val messages = sentMessagesDeferred.await() + receivedMessagesDeferred.await()
             continuation.resume(messages)
         }

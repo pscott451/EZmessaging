@@ -91,8 +91,8 @@ class ContentManagerImplTest {
         // Given
         val smsMessage = MessageUtils.buildSmsMessage()
         val mmsMessage = MessageUtils.buildMmsMessage()
-        coEvery { smsManager.getAllMessages() } returns listOf(smsMessage)
-        coEvery { mmsManager.getAllMessages() } returns listOf(mmsMessage)
+        coEvery { smsManager.getAllMessages(any()) } returns listOf(smsMessage)
+        coEvery { mmsManager.getAllMessages(any()) } returns listOf(mmsMessage)
 
         // When
         val messages = contentManager.getAllMessages()
