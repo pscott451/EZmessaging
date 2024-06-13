@@ -24,7 +24,22 @@ internal class MmsManager @Inject constructor(
     /**
      * Retrieve all messages from the database, if they exist.
      */
-    suspend fun getAllMessages(): List<MmsMessage> = mmsContentResolver.getAllMmsMessages()
+    suspend fun getAllMessages(
+        percentComplete: ((Float) -> Unit)? = null
+    ): List<MmsMessage>{
+        var percentContentRetrieved = 0f
+        var percentMessagesBuilt = 0f
+        return mmsContentResolver.getAllMmsMessages(
+            percentContentRetrieved = {
+                percentContentRetrieved = it
+                percentComplete?.invoke((percentContentRetrieved + percentMessagesBuilt) / 2)
+            },
+            percentMessagesBuilt = {
+                percentMessagesBuilt = it
+                percentComplete?.invoke((percentContentRetrieved + percentMessagesBuilt) / 2)
+            }
+        )
+    }
 
     /**
      * @return a list of [MmsMessage] that match the provided params, if they exist.

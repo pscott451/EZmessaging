@@ -39,26 +39,52 @@ internal class MmsContentResolver @Inject constructor(
     private val contentResolver: ContentResolver? = context.contentResolver
     private val coroutineScope = CoroutineScope(dispatcherProvider.io())
 
+    // Keep track of the total number of valid messages to help calculate
+    // the percent complete when retrieving all messages via getAllMmsMessages().
+    private var numberOfValidMessages = 0f
+
     /**
      * Retrieves all existing MMS messages.
      */
-    suspend fun getAllMmsMessages(): List<MmsMessage> = suspendCoroutine { continuation ->
+    suspend fun getAllMmsMessages(
+        percentContentRetrieved: ((Float) -> Unit)? = null,
+        percentMessagesBuilt: ((Float) -> Unit)? = null,
+    ): List<MmsMessage> = suspendCoroutine { continuation ->
         coroutineScope.launch {
+            var percentMetadataComplete = 0f
+            var percentAddressesComplete = 0f
+            var percentContentComplete = 0f
             runCatching {
-                val metadataMapDeferred = async { getMessageMetadata() }
-                val addressesMapDeferred = async { getMessageAddresses() }
-                val contentMapDeferred = async { getMessageContent() }
+                val metadataMapDeferred = async {
+                    getMessageMetadata {
+                        percentMetadataComplete = it
+                        percentContentRetrieved?.invoke((percentMetadataComplete + percentAddressesComplete + percentContentComplete) / 3)
+                    }
+                }
+                val addressesMapDeferred = async {
+                    getMessageAddresses {
+                        percentAddressesComplete = it
+                        percentContentRetrieved?.invoke((percentMetadataComplete + percentAddressesComplete + percentContentComplete) / 3)
+                    }
+                }
+                val contentMapDeferred = async {
+                    getMessageContent {
+                        percentContentComplete = it
+                        percentContentRetrieved?.invoke((percentMetadataComplete + percentAddressesComplete + percentContentComplete) / 3)
+                    }
+                }
 
                 val metadataMap = metadataMapDeferred.await()
                 val addressesMap = addressesMapDeferred.await()
                 val contentMap = contentMapDeferred.await()
-                buildMessages(metadataMap, contentMap, addressesMap)
+                buildMessages(metadataMap, contentMap, addressesMap, percentMessagesBuilt)
             }.onSuccess {
                 continuation.resume(it)
             }.onFailure {
                 logError(it)
                 continuation.resume(emptyList())
             }
+            numberOfValidMessages = 0f
         }
     }
 
@@ -109,6 +135,7 @@ internal class MmsContentResolver @Inject constructor(
         }.onFailure {
             logError(it)
         }
+        numberOfValidMessages = 0f
         return messages
     }
 
@@ -194,7 +221,10 @@ internal class MmsContentResolver @Inject constructor(
      * If [columnFilters] is an empty string, returns an empty map.
      * If [columnFilters] is null, returns everything.
      */
-    private fun getMessageMetadata(columnFilters: String? = null): Map<String, MessageMetadata> {
+    private fun getMessageMetadata(
+        columnFilters: String? = null,
+        percentComplete: ((Float) -> Unit)? = null
+    ): Map<String, MessageMetadata> {
         val messageIdToMetaData = mutableMapOf<String, MessageMetadata>()
         if (columnFilters == "") return messageIdToMetaData
         contentResolver.getCursor(
@@ -208,6 +238,8 @@ internal class MmsContentResolver @Inject constructor(
             ),
             columnFilters
         )?.let { cursor ->
+            val messageCount = cursor.count.toFloat()
+            var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 val id = cursor.getColumnValue(COLUMN_MMS_ID)
                 val threadId = cursor.getColumnValue(COLUMN_MMS_THREAD_ID)
@@ -224,7 +256,10 @@ internal class MmsContentResolver @Inject constructor(
                 id?.let {
                     messageIdToMetaData[it] = metaData
                 }
+                messagesLoaded++
+                percentComplete?.invoke(messagesLoaded/messageCount)
             }
+            percentComplete?.invoke(1f)
         }
         return messageIdToMetaData
     }
@@ -235,7 +270,10 @@ internal class MmsContentResolver @Inject constructor(
      * If [columnFilters] is an empty string, returns an empty map.
      * If [columnFilters] is null, returns everything.
      */
-    private fun getMessageAddresses(columnFilters: String? = null): Map<String, AddressMetadata> {
+    private fun getMessageAddresses(
+        columnFilters: String? = null,
+        percentComplete: ((Float) -> Unit)? = null
+    ): Map<String, AddressMetadata> {
         val messageIdToAddresses = mutableMapOf<String, AddressMetadata>()
         if (columnFilters == "") return messageIdToAddresses
         contentResolver.getCursor(
@@ -247,6 +285,8 @@ internal class MmsContentResolver @Inject constructor(
             ),
             columnFilters
         )?.let { cursor ->
+            val messageCount = cursor.count.toFloat()
+            var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 val msgId = cursor.getColumnValue(COLUMN_MMS_MESSAGE_ID)
                 val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS).asUSPhoneNumber()
@@ -265,7 +305,10 @@ internal class MmsContentResolver @Inject constructor(
                         )
                     }
                 }
+                messagesLoaded++
+                percentComplete?.invoke(messagesLoaded/messageCount)
             }
+            percentComplete?.invoke(1f)
         }
         return messageIdToAddresses
     }
@@ -276,7 +319,10 @@ internal class MmsContentResolver @Inject constructor(
      * If [columnFilters] is an empty string, returns an empty map.
      * If [columnFilters] is null, returns everything.
      */
-    private fun getMessageContent(columnFilters: String? = null): Map<String, List<ContentMetadata>> {
+    private fun getMessageContent(
+        columnFilters: String? = null,
+        percentComplete: ((Float) -> Unit)? = null
+    ): Map<String, List<ContentMetadata>> {
         val messageIdToContent = mutableMapOf<String, ArrayList<ContentMetadata>>()
         if (columnFilters == "") return messageIdToContent
         contentResolver.getCursor(
@@ -290,6 +336,8 @@ internal class MmsContentResolver @Inject constructor(
             ),
             columnFilters
         )?.let { cursor ->
+            val messageCount = cursor.count.toFloat()
+            var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 val mid = cursor.getColumnValue(COLUMN_MMS_MID)
                 val uniqueId = cursor.getColumnValue(COLUMN_MMS_ID)
@@ -305,8 +353,12 @@ internal class MmsContentResolver @Inject constructor(
                     messageIdToContent[mid]?.add(content) ?: run {
                         messageIdToContent[mid] = arrayListOf(content)
                     }
+                    numberOfValidMessages++
                 }
+                messagesLoaded++
+                percentComplete?.invoke(messagesLoaded/messageCount)
             }
+            percentComplete?.invoke(1f)
         }
         return messageIdToContent
     }
@@ -314,10 +366,13 @@ internal class MmsContentResolver @Inject constructor(
     private fun buildMessages(
         metadataMap: Map<String, MessageMetadata>,
         contentMap: Map<String, List<ContentMetadata>>,
-        addressesMap: Map<String, AddressMetadata>
+        addressesMap: Map<String, AddressMetadata>,
+        percentMessagesBuilt: ((Float) -> Unit)? = null
     ): List<MmsMessage> {
         val messageDetails = mutableMapOf<String, ArrayList<MessageDetails>>()
 
+        val totalCount = contentMap.size + metadataMap.size + addressesMap.size + numberOfValidMessages
+        var numberProcessed = 0f
         contentMap.forEach { (msgId, contentMetadata) ->
             contentMetadata.forEach { content ->
                 val details = MessageDetails(
@@ -330,6 +385,8 @@ internal class MmsContentResolver @Inject constructor(
                     messageDetails[msgId] = arrayListOf(details)
                 }
             }
+            numberProcessed++
+            percentMessagesBuilt?.invoke(numberProcessed / totalCount)
         }
 
         addressesMap.forEach { (msgId, addressMetadata) ->
@@ -339,6 +396,8 @@ internal class MmsContentResolver @Inject constructor(
                     it.participants.addAll(addressMetadata.participants)
                 }
             }
+            numberProcessed++
+            percentMessagesBuilt?.invoke(numberProcessed / totalCount)
         }
 
         metadataMap.forEach { (msgId, metadata) ->
@@ -350,12 +409,19 @@ internal class MmsContentResolver @Inject constructor(
                     it.hasBeenRead = metadata.hasBeenRead
                 }
             }
+            numberProcessed++
+            percentMessagesBuilt?.invoke(numberProcessed / totalCount)
         }
 
         val messages = arrayListOf<MmsMessage>()
         messageDetails.values.forEach { details ->
-            messages.addAll(details.mapNotNull { it.toMessage() })
+            messages.addAll(details.mapNotNull {
+                numberProcessed++
+                percentMessagesBuilt?.invoke(numberProcessed / totalCount)
+                it.toMessage()
+            })
         }
+        percentMessagesBuilt?.invoke(1f)
         return messages
     }
 

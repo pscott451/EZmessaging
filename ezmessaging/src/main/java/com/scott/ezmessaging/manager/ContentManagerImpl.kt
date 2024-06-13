@@ -47,10 +47,22 @@ internal class ContentManagerImpl(
         deviceManager.initialize()
     }
 
-    override suspend fun getAllMessages() = suspendCoroutine { continuation ->
+    override suspend fun getAllMessages(percentComplete: ((Float) -> Unit)?) = suspendCoroutine { continuation ->
         coroutineScope.launch {
-            val smsMessagesDeferred = async { smsManager.getAllMessages() }
-            val mmsMessagesDeferred = async { mmsManager.getAllMessages() }
+            var smsPercentLoaded = 0f
+            var mmsPercentLoaded = 0f
+            val smsMessagesDeferred = async {
+                smsManager.getAllMessages {
+                    smsPercentLoaded = it
+                    percentComplete?.invoke((smsPercentLoaded + mmsPercentLoaded) / 2)
+                }
+            }
+            val mmsMessagesDeferred = async {
+                mmsManager.getAllMessages {
+                    mmsPercentLoaded = it
+                    percentComplete?.invoke((smsPercentLoaded + mmsPercentLoaded) / 2)
+                }
+            }
             continuation.resume(smsMessagesDeferred.await() + mmsMessagesDeferred.await())
         }
     }

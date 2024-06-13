@@ -30,7 +30,7 @@ class MmsManagerTest {
     @Test
     fun `getAllMessages returns messages from mmsContentResolver`() = runTest {
         // Given
-        coEvery { mmsContentResolver.getAllMmsMessages() } returns listOf(MessageUtils.buildMmsMessage())
+        coEvery { mmsContentResolver.getAllMmsMessages(any(), any()) } returns listOf(MessageUtils.buildMmsMessage())
 
         // When
         val messages = mmsManager.getAllMessages()

@@ -41,12 +41,14 @@ internal class SmsContentResolver @Inject constructor(
     /**
      * @return all messages that have been received.
      */
-    fun getAllReceivedSmsMessages(): List<SmsMessage> {
+    fun getAllReceivedSmsMessages(percentComplete: ((Float) -> Unit)? = null): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         contentResolver.getCursor(
             uri = CONTENT_SMS_INBOX,
             columnsToReturn = columns
         )?.let { cursor ->
+            val messageCount = cursor.count.toFloat()
+            var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 runCatching {
                     val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
@@ -70,7 +72,10 @@ internal class SmsContentResolver @Inject constructor(
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
+                messagesLoaded++
+                percentComplete?.invoke(messagesLoaded/messageCount)
             }
+            percentComplete?.invoke(1f)
         }
         return messages
     }
@@ -78,12 +83,14 @@ internal class SmsContentResolver @Inject constructor(
     /**
      * @return all messages that have been sent.
      */
-    fun getAllSentSmsMessages(): List<SmsMessage> {
+    fun getAllSentSmsMessages(percentComplete: ((Float) -> Unit)? = null): List<SmsMessage> {
         val messages = arrayListOf<SmsMessage>()
         contentResolver.getCursor(
             uri = CONTENT_SMS_OUTBOX,
             columnsToReturn = columns
         )?.let { cursor ->
+            val messageCount = cursor.count.toFloat()
+            var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 runCatching {
                     val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
@@ -108,7 +115,10 @@ internal class SmsContentResolver @Inject constructor(
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
+                messagesLoaded++
+                percentComplete?.invoke(messagesLoaded/messageCount)
             }
+            percentComplete?.invoke(1f)
         }
         return messages
     }
