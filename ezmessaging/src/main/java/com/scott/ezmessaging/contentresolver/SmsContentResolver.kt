@@ -151,16 +151,12 @@ internal class SmsContentResolver @Inject constructor(
         var insertedMessage: SmsMessage? = null
         runCatching {
             val dateSent = System.currentTimeMillis()
-            contentResolver?.insert(Uri.parse(CONTENT_SMS_OUTBOX), ContentValues().apply {
+            val uri = contentResolver?.insert(Uri.parse(CONTENT_SMS_OUTBOX), ContentValues().apply {
                 put(COLUMN_SMS_BODY, body)
                 put(COLUMN_SMS_ADDRESS, address)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessagesByParams(
-                uri = CONTENT_SMS_OUTBOX,
-                exactText = body,
-                dateInMillis = dateSent
-            ).first()
+            insertedMessage = findMessageByUri(uri = uri)
         }.onFailure { logError(it) }
         return insertedMessage
     }
@@ -173,13 +169,13 @@ internal class SmsContentResolver @Inject constructor(
     fun insertReceivedMessage(address: String, body: String, dateSent: Long, dateReceived: Long): SmsMessage? {
         var insertedMessage: SmsMessage? = null
         runCatching {
-            contentResolver?.insert(Uri.parse(CONTENT_SMS_INBOX), ContentValues().apply {
+            val uri = contentResolver?.insert(Uri.parse(CONTENT_SMS_INBOX), ContentValues().apply {
                 put(COLUMN_SMS_BODY, body)
                 put(COLUMN_SMS_ADDRESS, address)
                 put(COLUMN_SMS_DATE_RECEIVED, dateReceived)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessagesByParams(uri = CONTENT_SMS_INBOX, exactText = body, dateInMillis = dateReceived).first()
+            insertedMessage = findMessageByUri(uri = uri)
         }.onFailure { logError(it) }
         return insertedMessage
     }
@@ -219,6 +215,41 @@ internal class SmsContentResolver @Inject constructor(
             return true
         }.onFailure { logError(it) }
         return false
+    }
+
+    private fun findMessageByUri(uri: Uri?): SmsMessage? {
+        var message: SmsMessage? = null
+        if (uri == null) return null
+
+        contentResolver.getCursor(
+            uri = uri,
+            columnsToReturn = columns
+        )?.let { cursor ->
+            while (cursor.moveToNext()) {
+                runCatching {
+                    val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
+                    val threadId = cursor.getColumnValue(COLUMN_SMS_THREAD_ID)
+                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS).asUSPhoneNumber()!!
+                    val dateSent = cursor.getColumnValue(COLUMN_SMS_DATE_SENT)
+                    val dateReceived = cursor.getColumnValue(COLUMN_SMS_DATE_RECEIVED)
+                    val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
+                    val text = cursor.getColumnValue(COLUMN_SMS_BODY)
+
+                    // I don't care about messages that don't have all the required info so forcing unwrapping.
+                    message = SmsMessage(
+                        messageId = messageId!!,
+                        threadId = threadId!!,
+                        senderAddress = recipient,
+                        text = text!!,
+                        dateSent = dateSent!!.toLong(),
+                        dateReceived = dateReceived!!.toLong(),
+                        hasBeenRead = beenRead == "1",
+                        participants = setOf(recipient, deviceManager.getThisDeviceMainNumber())
+                    )
+                }.onFailure { logError(it) }
+            }
+        }
+        return message
     }
 
     private fun findMessagesByParams(
