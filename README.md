@@ -17,7 +17,7 @@ dependencyResolutionManagement {
 ```
 - Add the dependency to your app `build.gradle`
 ```kotlin
-implementation("com.github.pscott451:EZmessaging:1.4.1")
+implementation("com.github.pscott451:EZmessaging:1.4.2")
 ```
 - Add the required permissions to your `AndroidManifest`
 ```xml
