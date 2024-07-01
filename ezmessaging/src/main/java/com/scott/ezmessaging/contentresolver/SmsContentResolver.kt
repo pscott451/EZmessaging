@@ -156,7 +156,7 @@ internal class SmsContentResolver @Inject constructor(
                 put(COLUMN_SMS_ADDRESS, address)
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
-            insertedMessage = findMessageByUri(uri = uri)
+            insertedMessage = findMessageByUri(uri = uri, isOutbox = true)
         }.onFailure { logError(it) }
         return insertedMessage
     }
@@ -217,7 +217,7 @@ internal class SmsContentResolver @Inject constructor(
         return false
     }
 
-    private fun findMessageByUri(uri: Uri?): SmsMessage? {
+    private fun findMessageByUri(uri: Uri?, isOutbox: Boolean = false): SmsMessage? {
         var message: SmsMessage? = null
         if (uri == null) return null
 
@@ -239,7 +239,7 @@ internal class SmsContentResolver @Inject constructor(
                     message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = recipient,
+                        senderAddress = if (isOutbox) deviceManager.getThisDeviceMainNumber() else recipient,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
