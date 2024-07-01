@@ -288,7 +288,7 @@ internal class SmsContentResolver @Inject constructor(
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = recipient,
+                        senderAddress = if (uri == CONTENT_SMS_OUTBOX) deviceManager.getThisDeviceMainNumber() else recipient,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
