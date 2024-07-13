@@ -11,6 +11,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -21,7 +22,8 @@ class DeviceManagerTest {
     private val context = mockk<Context>()
     private val subscriptionManager = mockk<SubscriptionManager>()
     private val subscriptionInfo = mockk<SubscriptionInfo>()
-    private val deviceManager = DeviceManager(context)
+    private val sharedPreferencesManager = mockk<SharedPreferencesManager>(relaxed = true)
+    private val deviceManager = DeviceManager(context, sharedPreferencesManager)
 
     @Test
     fun `device manager state is Uninitialized when created`() = runTest {
@@ -47,6 +49,23 @@ class DeviceManagerTest {
     }
 
     @Test
+    fun `inserts numbers into the shared preferences`() = runTest {
+        // Given
+        every { context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) } returns subscriptionManager
+        val subscriptionInfo2 = mockk<SubscriptionInfo>()
+        every { subscriptionInfo2.number } returns "1111111111"
+        every { subscriptionInfo.number } returns "5555555555"
+        every { subscriptionManager.activeSubscriptionInfoList } returns listOf(subscriptionInfo, subscriptionInfo2)
+
+        // When
+        deviceManager.initialize()
+
+        // Then
+        verify { sharedPreferencesManager.setThisDeviceMainNumber("5555555555") }
+        verify { sharedPreferencesManager.setAllDeviceNumbers(listOf("5555555555", "1111111111")) }
+    }
+
+    @Test
     fun `device manager state is Error if numbers don't exist`() = runTest {
         // Given
         every { context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) } returns subscriptionManager
@@ -62,31 +81,23 @@ class DeviceManagerTest {
     }
 
     @Test
-    fun `getThisDeviceNumbers returns device numbers`() = runTest {
+    fun `getThisDeviceNumbers returns device numbers from shared preferences`() = runTest {
         // Given
-        every { context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) } returns subscriptionManager
-        every { subscriptionInfo.number } returns "5555555555"
-        every { subscriptionManager.activeSubscriptionInfoList } returns listOf(subscriptionInfo)
+        every { sharedPreferencesManager.getAllDeviceNumbers() } returns listOf("5555555555", "1111111111")
 
         // When
-        deviceManager.initialize()
         val numbers = deviceManager.getThisDeviceNumbers()
 
         // Then
-        numbers.shouldBe(listOf("5555555555"))
+        numbers.shouldBe(listOf("5555555555", "1111111111"))
     }
 
     @Test
-    fun `getThisDeviceMainNumber returns first number in list of device numbers`() = runTest {
+    fun `getThisDeviceMainNumber returns number from shared preferences`() = runTest {
         // Given
-        every { context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) } returns subscriptionManager
-        every { subscriptionInfo.number } returns "5555555555"
-        val subscriptionInfo2 = mockk<SubscriptionInfo>()
-        every { subscriptionInfo2.number } returns "1111111111"
-        every { subscriptionManager.activeSubscriptionInfoList } returns listOf(subscriptionInfo, subscriptionInfo2)
+        every { sharedPreferencesManager.getThisDeviceMainNumber() } returns "5555555555"
 
         // When
-        deviceManager.initialize()
         val mainNumber = deviceManager.getThisDeviceMainNumber()
 
         // Then
