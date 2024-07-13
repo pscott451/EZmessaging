@@ -18,13 +18,12 @@ import javax.inject.Singleton
  */
 @Singleton
 internal class DeviceManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val sharedPreferencesManager: SharedPreferencesManager
 ) {
 
     private val _initializedState = MutableStateFlow<Initializable<Unit>>(Initializable.Uninitialized)
     val initializedState = _initializedState.asStateFlow()
-
-    private val thisDeviceNumbers = arrayListOf<String>()
 
     /**
      * Builds the list of device numbers. Once initialized, [getThisDeviceNumbers] and [getThisDeviceMainNumber] will
@@ -41,7 +40,10 @@ internal class DeviceManager @Inject constructor(
             _initializedState.value = Initializable.Error(Throwable("No numbers found for this device"))
             throw IllegalStateException("No numbers found for this device")
         } else {
-            thisDeviceNumbers.addAll(numbers)
+            with(sharedPreferencesManager) {
+                setThisDeviceMainNumber(numbers.first())
+                setAllDeviceNumbers(numbers)
+            }
             _initializedState.value = Initializable.Initialized(Unit)
         }
     }
@@ -49,10 +51,10 @@ internal class DeviceManager @Inject constructor(
     /**
      * @return A list containing all of this device's phone numbers.
      */
-    fun getThisDeviceNumbers(): List<String> = thisDeviceNumbers
+    fun getThisDeviceNumbers(): List<String> = sharedPreferencesManager.getAllDeviceNumbers()
 
     /**
      * @return The main number of this device.
      */
-    fun getThisDeviceMainNumber(): String = thisDeviceNumbers.first()
+    fun getThisDeviceMainNumber() = sharedPreferencesManager.getThisDeviceMainNumber()
 }
