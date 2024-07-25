@@ -59,6 +59,7 @@ dependencies {
     // Coil (Displaying Gifs)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation("com.google.android.exoplayer:exoplayer:2.18.7")
 
     // Compose
     val composeBom = platform(libs.androidx.compose.bom)

@@ -106,10 +106,11 @@ interface ContentManager {
         const val CONTENT_TYPE_BMP = "image/bmp"
         const val CONTENT_TYPE_GIF = "image/gif" // Able to receive, but not send currently
         const val CONTENT_TYPE_PNG = "image/png"
+        const val CONTENT_TYPE_VIDEO = "video/3gpp"
         const val CONTENT_TYPE_TEXT = "text/plain"
 
         fun String?.isValidMessageType() = this == CONTENT_TYPE_JPEG || this == CONTENT_TYPE_JPG ||
                 this == CONTENT_TYPE_GIF || this == CONTENT_TYPE_BMP ||
-                this == CONTENT_TYPE_PNG || this == CONTENT_TYPE_TEXT
+                this == CONTENT_TYPE_PNG || this == CONTENT_TYPE_TEXT || this == CONTENT_TYPE_VIDEO
     }
 }

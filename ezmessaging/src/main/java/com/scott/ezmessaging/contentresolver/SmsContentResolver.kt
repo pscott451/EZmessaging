@@ -59,6 +59,12 @@ internal class SmsContentResolver @Inject constructor(
                     val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
                     val body = cursor.getColumnValue(COLUMN_SMS_BODY)
 
+                    if (dateReceived != null) {
+                        if (dateReceived.toLong() > 1720591209000) {
+                            println()
+                        }
+                    }
+
                     // I don't care about messages that don't have all the required info so force unwrapping.
                     val message = SmsMessage(
                         messageId = messageId!!,
@@ -176,7 +182,9 @@ internal class SmsContentResolver @Inject constructor(
                 put(COLUMN_SMS_DATE_SENT, dateSent)
             })
             insertedMessage = findMessageByUri(uri = uri)
-        }.onFailure { logError(it) }
+        }.onFailure {
+            logError(it)
+        }
         return insertedMessage
     }
 
@@ -246,7 +254,11 @@ internal class SmsContentResolver @Inject constructor(
                         hasBeenRead = beenRead == "1",
                         participants = setOf(recipient, deviceManager.getThisDeviceMainNumber())
                     )
-                }.onFailure { logError(it) }
+                    println()
+                }.onFailure {
+                    println("testingg error ${it.message}")
+                    logError(it)
+                }
             }
         }
         return message

@@ -215,6 +215,7 @@ internal class MmsContentResolver @Inject constructor(
         return false
     }
 
+
     /**
      * @return a map containing message's thread id, messageId, date sent, date received, and if it's been read.
      * @param columnFilters Any filters that should be applied when retrieving the message content.
@@ -246,6 +247,11 @@ internal class MmsContentResolver @Inject constructor(
                 val dateSent = cursor.getColumnValue(COLUMN_MMS_DATE_SENT)
                 val dateReceived = cursor.getColumnValue(COLUMN_MMS_DATE)
                 val hasBeenRead = cursor.getColumnValue(COLUMN_MMS_HAS_BEEN_READ)
+                if (dateReceived != null) {
+                    if (dateReceived.toLong() > 1720591209) {
+                        println()
+                    }
+                }
                 val metaData = MessageMetadata(
                     threadId = threadId,
                     messageId = id,
@@ -313,6 +319,9 @@ internal class MmsContentResolver @Inject constructor(
         return messageIdToAddresses
     }
 
+    val videoId = "49650"
+    val videoUniqueId = "66328"
+
     /**
      * @return a map containing message's unique id, text, and content type.
      * @param columnFilters Any filters that should be applied when retrieving the message content.
@@ -340,6 +349,11 @@ internal class MmsContentResolver @Inject constructor(
             var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 val mid = cursor.getColumnValue(COLUMN_MMS_MID)
+                /*mid?.let {
+                    if (it.toInt() in (49642..49655)) {
+                        println()
+                    }
+                }*/
                 val uniqueId = cursor.getColumnValue(COLUMN_MMS_ID)
                 val type = cursor.getColumnValue(COLUMN_MMS_CT)
                 val text = cursor.getColumnValue(COLUMN_MMS_TEXT)
@@ -349,6 +363,9 @@ internal class MmsContentResolver @Inject constructor(
                     type = type
                 )
 
+                if (mid == videoId) {
+                    println()
+                }
                 if (mid != null && type.isValidMessageType()) {
                     messageIdToContent[mid]?.add(content) ?: run {
                         messageIdToContent[mid] = arrayListOf(content)
