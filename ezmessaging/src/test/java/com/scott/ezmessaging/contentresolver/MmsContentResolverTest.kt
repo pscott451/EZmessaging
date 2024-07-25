@@ -58,49 +58,19 @@ class MmsContentResolverTest {
             Message.MmsMessage(
                 messageId = "43533",
                 threadId = "12",
-                senderAddress = "1111111111",
+                senderAddress = "+11111111111",
                 dateSent = 1710452812000,
                 dateReceived = 1710452812000,
                 hasBeenRead = true,
-                participants = setOf("1111111111", "5555555555"),
+                participants = setOf("+11111111111", "+15555555555"),
                 uniqueId = "59009",
                 messageType = "image/jpeg",
-                hasImage = true,
                 text = null
             )
         )
         mockCursor("content://mms", METADATA_COLUMNS, TestContentResolverDataMMS.METADATA_43533)
         mockCursor("content://mms/addr", ADDRESSES_COLUMNS, TestContentResolverDataMMS.ADDRESSES_43533)
         mockCursor("content://mms/part", CONTENT_COLUMNS, TestContentResolverDataMMS.CONTENT_43533)
-
-        // When
-        val messages = mmsContentResolver.getAllMmsMessages()
-
-        // Then
-        messages.shouldBe(expected)
-    }
-
-    @Test
-    fun `getAllMmsMessages uses correct content object when there are multiple`() = runTest {
-        // Given
-        val expected = listOf(
-            Message.MmsMessage(
-                messageId = "44052",
-                threadId = "4",
-                senderAddress = "5555555555",
-                dateSent = 1711319465000,
-                dateReceived = 1711319465000,
-                hasBeenRead = true,
-                participants = setOf("1111111111", "5555555555", "2222222222", "3333333333"),
-                uniqueId = "59606",
-                messageType = "text/plain",
-                hasImage = false,
-                text = "Damn, Gina. That's shitty"
-            )
-        )
-        mockCursor("content://mms", METADATA_COLUMNS, TestContentResolverDataMMS.METADATA_44052)
-        mockCursor("content://mms/addr", ADDRESSES_COLUMNS, TestContentResolverDataMMS.ADDRESSES_44052)
-        mockCursor("content://mms/part", CONTENT_COLUMNS, TestContentResolverDataMMS.CONTENT_44052)
 
         // When
         val messages = mmsContentResolver.getAllMmsMessages()

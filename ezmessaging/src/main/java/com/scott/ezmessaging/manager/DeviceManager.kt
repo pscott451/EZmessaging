@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Context
 import android.telephony.SubscriptionManager
 import androidx.annotation.RequiresPermission
-import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.model.Initializable
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +33,7 @@ internal class DeviceManager @Inject constructor(
     fun initialize() {
         val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as? SubscriptionManager
 
-        val numbers = subscriptionManager?.activeSubscriptionInfoList?.mapNotNull { it.number.asUSPhoneNumber() }
+        val numbers = subscriptionManager?.activeSubscriptionInfoList?.mapNotNull { it.number }
 
         if (numbers.isNullOrEmpty()) {
             _initializedState.value = Initializable.Error(Throwable("No numbers found for this device"))

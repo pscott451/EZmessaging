@@ -38,8 +38,8 @@ import com.scott.ezmessaging.download.DownloadManager.DownloadResult.DownloadErr
 import com.scott.ezmessaging.download.DownloadManager.DownloadResult.DownloadSuccess
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
-import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
+import com.scott.ezmessaging.manager.ContentManager.MessageTypes.CONTENT_TYPE_TEXT
+import com.scott.ezmessaging.manager.ContentManager.MessageTypes.isSupportedMessageType
 import com.scott.ezmessaging.model.GoogleProcessResult
 import com.scott.ezmessaging.model.MessageData
 import com.scott.ezmessaging.receiver.MmsFileProvider
@@ -229,7 +229,7 @@ internal class GoogleManager @Inject constructor(
                         compressQuality -= 10
                     } while (imageByteArray != null && imageByteArray.size > ONE_MEGA_BYTE && compressQuality >= 0)
 
-                    val isValidType = message.mimeType.isValidMessageType()
+                    val isValidType = message.mimeType.isSupportedMessageType()
                     when {
                         imageByteArray == null -> {
                             onInsertedIntoDatabase(null)

@@ -71,11 +71,8 @@ internal class MmsManager @Inject constructor(
                 }
 
                 is GoogleProcessResult.ProcessSuccess -> {
-                    mmsContentResolver.findMessageByUri(processResult.saveLocation)?.let {
-                        MessageReceiveResult.Success(listOf(it))
-                    } ?: run {
-                        MessageReceiveResult.Failed("No messages found after parsing intent")
-                    }
+                    val messages = mmsContentResolver.findMessagesByUri(processResult.saveLocation)
+                    MessageReceiveResult.Success(messages)
                 }
             }
             onReceiveResult(receiveResult)
@@ -96,11 +93,12 @@ internal class MmsManager @Inject constructor(
             fromAddress = deviceManager.getThisDeviceMainNumber(),
             recipients = recipients,
             onInsertedIntoDatabase = { location ->
-                onMessageCreated(mmsContentResolver.findMessageByUri(location))
+                onMessageCreated(mmsContentResolver.findMessagesByUri(location).find { it.messageType != ContentManager.MessageTypes.CONTENT_APPLICATION_SMIL })
             },
             onSent = { uri, exception ->
-                mmsContentResolver.findMessageByUri(uri)?.let { message ->
-                    onSent(MessageSendResult.Success(message))
+                val sentMessage = mmsContentResolver.findMessagesByUri(uri).find { it.messageType != ContentManager.MessageTypes.CONTENT_APPLICATION_SMIL }
+                sentMessage?.let {
+                    onSent(MessageSendResult.Success(it))
                 } ?: run {
                     val errorMessage = exception?.message ?: "An error occurred sending the mms message"
                     onSent(MessageSendResult.Failed(errorMessage))

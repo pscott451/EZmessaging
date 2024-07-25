@@ -85,7 +85,7 @@ class SmsContentResolverTest {
                 dateSent = 1710442650402,
                 dateReceived = 1710442650402,
                 hasBeenRead = true,
-                participants = setOf("2222222222", "5555555555"),
+                participants = setOf("+12222222222", "5555555555"),
                 text = "Hope you bought me a pie"
             )
         )

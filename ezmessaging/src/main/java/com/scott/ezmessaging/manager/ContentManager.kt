@@ -100,15 +100,16 @@ interface ContentManager {
         afterDateMillis: Long? = null
     ): List<Message>
 
-    object SupportedMessageTypes {
+    object MessageTypes {
         const val CONTENT_TYPE_JPEG = "image/jpeg"
         const val CONTENT_TYPE_JPG = "image/jpg"
         const val CONTENT_TYPE_BMP = "image/bmp"
         const val CONTENT_TYPE_GIF = "image/gif" // Able to receive, but not send currently
         const val CONTENT_TYPE_PNG = "image/png"
         const val CONTENT_TYPE_TEXT = "text/plain"
+        const val CONTENT_APPLICATION_SMIL = "application/smil"
 
-        fun String?.isValidMessageType() = this == CONTENT_TYPE_JPEG || this == CONTENT_TYPE_JPG ||
+        fun String?.isSupportedMessageType() = this == CONTENT_TYPE_JPEG || this == CONTENT_TYPE_JPG ||
                 this == CONTENT_TYPE_GIF || this == CONTENT_TYPE_BMP ||
                 this == CONTENT_TYPE_PNG || this == CONTENT_TYPE_TEXT
     }

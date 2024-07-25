@@ -45,7 +45,6 @@ sealed class Message {
      * Pictures, Gifs, group conversations, etc.
      * @property uniqueId every object returned from a [ContentResolver] will have a unique id.
      * @property messageType the content type of the message. 'image/gif', 'image/jpg', 'text/plain', etc.
-     * @property hasImage if there's an image attached to the message.
      * @property text the content of the message.
      */
     data class MmsMessage(
@@ -58,7 +57,6 @@ sealed class Message {
         override val participants: Set<String>,
         val uniqueId: String,
         val messageType: String,
-        val hasImage: Boolean,
         val text: String?
     ): Message()
 }

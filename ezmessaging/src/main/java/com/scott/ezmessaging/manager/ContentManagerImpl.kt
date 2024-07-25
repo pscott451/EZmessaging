@@ -7,7 +7,6 @@ import android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION
 import android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION
 import androidx.annotation.RequiresPermission
 import com.google.android.mms.ContentType
-import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.model.Initializable
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.MmsMessage
@@ -151,7 +150,7 @@ internal class ContentManagerImpl(
         val list = arrayListOf<SmsMessage>()
         val smsMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         for (message in smsMessages) {
-            message.originatingAddress.asUSPhoneNumber()?.let { address ->
+            message.originatingAddress?.let { address ->
                 smsManager.receiveMessage(
                     address = address,
                     body = message.messageBody,

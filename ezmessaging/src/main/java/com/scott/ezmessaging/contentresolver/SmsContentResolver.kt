@@ -10,7 +10,6 @@ import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.AfterDate
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ContainsTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ExactTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
-import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
 import com.scott.ezmessaging.manager.DeviceManager
@@ -63,12 +62,12 @@ internal class SmsContentResolver @Inject constructor(
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = address.asUSPhoneNumber()!!,
+                        senderAddress = address!!,
                         text = body!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(address.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(address, deviceManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -111,7 +110,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(sentToAddress.asUSPhoneNumber()!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(sentToAddress!!, deviceManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -229,7 +228,7 @@ internal class SmsContentResolver @Inject constructor(
                 runCatching {
                     val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
                     val threadId = cursor.getColumnValue(COLUMN_SMS_THREAD_ID)
-                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS).asUSPhoneNumber()!!
+                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS)
                     val dateSent = cursor.getColumnValue(COLUMN_SMS_DATE_SENT)
                     val dateReceived = cursor.getColumnValue(COLUMN_SMS_DATE_RECEIVED)
                     val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
@@ -239,12 +238,12 @@ internal class SmsContentResolver @Inject constructor(
                     message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = if (isOutbox) deviceManager.getThisDeviceMainNumber() else recipient,
+                        senderAddress = if (isOutbox) deviceManager.getThisDeviceMainNumber() else recipient!!,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(recipient, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(recipient!!, deviceManager.getThisDeviceMainNumber())
                     )
                 }.onFailure { logError(it) }
             }
@@ -278,7 +277,7 @@ internal class SmsContentResolver @Inject constructor(
                 runCatching {
                     val messageId = cursor.getColumnValue(COLUMN_SMS_ID)
                     val threadId = cursor.getColumnValue(COLUMN_SMS_THREAD_ID)
-                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS).asUSPhoneNumber()!!
+                    val recipient = cursor.getColumnValue(COLUMN_SMS_ADDRESS)
                     val dateSent = cursor.getColumnValue(COLUMN_SMS_DATE_SENT)
                     val dateReceived = cursor.getColumnValue(COLUMN_SMS_DATE_RECEIVED)
                     val beenRead = cursor.getColumnValue(COLUMN_SMS_HAS_BEEN_READ)
@@ -288,12 +287,12 @@ internal class SmsContentResolver @Inject constructor(
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = if (uri == CONTENT_SMS_OUTBOX) deviceManager.getThisDeviceMainNumber() else recipient,
+                        senderAddress = if (uri == CONTENT_SMS_OUTBOX) deviceManager.getThisDeviceMainNumber() else recipient!!,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(recipient, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(recipient!!, deviceManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }

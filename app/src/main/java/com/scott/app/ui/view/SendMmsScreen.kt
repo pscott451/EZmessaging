@@ -80,7 +80,7 @@ fun SendMmsMessage(viewModel: MmsViewModel = viewModel()) {
                     Text(text = stringResource(id = R.string.sendMms_sendmessagebutton))
                 }
                 Button(modifier = Modifier.padding(top = 20.dp), onClick = {
-                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.SingleMimeType(ContentManager.SupportedMessageTypes.CONTENT_TYPE_JPEG)))
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.SingleMimeType(ContentManager.MessageTypes.CONTENT_TYPE_JPEG)))
                     keyboardController?.hide()
                 }) {
                     Text(text = stringResource(id = R.string.sendMms_sendimagebutton))
