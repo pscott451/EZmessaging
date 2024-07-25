@@ -2,7 +2,7 @@ package com.scott.ezmessaging.module
 
 import com.scott.ezmessaging.manager.ContentManager
 import com.scott.ezmessaging.manager.ContentManagerImpl
-import com.scott.ezmessaging.manager.DeviceManager
+import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.manager.MmsManager
 import com.scott.ezmessaging.manager.SmsManager
 import com.scott.ezmessaging.provider.DispatchProviderImpl
@@ -23,11 +23,11 @@ internal object MessagingModule {
         dispatcherProvider: DispatcherProvider,
         smsManager: SmsManager,
         mmsManager: MmsManager,
-        deviceManager: DeviceManager
+        contactManager: ContactManager
     ): ContentManager = ContentManagerImpl(
         smsManager,
         mmsManager,
-        deviceManager,
+        contactManager,
         dispatcherProvider
     )
 

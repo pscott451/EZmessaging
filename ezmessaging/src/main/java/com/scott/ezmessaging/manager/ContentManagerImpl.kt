@@ -7,7 +7,6 @@ import android.provider.Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION
 import android.provider.Telephony.Sms.Intents.WAP_PUSH_RECEIVED_ACTION
 import androidx.annotation.RequiresPermission
 import com.google.android.mms.ContentType
-import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.model.Initializable
 import com.scott.ezmessaging.model.Message
 import com.scott.ezmessaging.model.Message.MmsMessage
@@ -30,7 +29,7 @@ import kotlin.coroutines.suspendCoroutine
 internal class ContentManagerImpl(
     private val smsManager: SmsManager,
     private val mmsManager: MmsManager,
-    private val deviceManager: DeviceManager,
+    private val contactManager: ContactManager,
     dispatcherProvider: DispatcherProvider,
 ) : ContentManager {
 
@@ -41,10 +40,10 @@ internal class ContentManagerImpl(
 
     @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     override fun initialize() {
-        deviceManager.initializedState.onEach {
+        contactManager.initializedState.onEach {
             _initializedState.value = it
         }.launchIn(coroutineScope)
-        deviceManager.initialize()
+        contactManager.initialize()
     }
 
     override suspend fun getAllMessages(percentComplete: ((Float) -> Unit)?) = suspendCoroutine { continuation ->
@@ -144,6 +143,8 @@ internal class ContentManagerImpl(
         }
     }
 
+    override fun getThisDeviceNumber() = contactManager.getThisDeviceMainNumber()
+
     private fun receiveSmsMessage(
         intent: Intent,
         onReceiveResult: (MessageReceiveResult) -> Unit
@@ -151,7 +152,7 @@ internal class ContentManagerImpl(
         val list = arrayListOf<SmsMessage>()
         val smsMessages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
         for (message in smsMessages) {
-            message.originatingAddress.asUSPhoneNumber()?.let { address ->
+            message.originatingAddress?.let { address ->
                 smsManager.receiveMessage(
                     address = address,
                     body = message.messageBody,

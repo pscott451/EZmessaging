@@ -34,7 +34,6 @@ object MessageUtils {
         participants: Set<String> = emptySet(),
         uniqueId: String = "uniqueId",
         messageType: String = "messageType",
-        hasImage: Boolean = false,
         text: String? = "text"
     ) = Message.MmsMessage(
         messageId,
@@ -46,7 +45,6 @@ object MessageUtils {
         participants,
         uniqueId,
         messageType,
-        hasImage,
         text
     )
 }

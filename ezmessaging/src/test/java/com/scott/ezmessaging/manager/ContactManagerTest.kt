@@ -17,17 +17,17 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(UnconfinedCoroutineRule::class)
-class DeviceManagerTest {
+class ContactManagerTest {
 
     private val context = mockk<Context>()
     private val subscriptionManager = mockk<SubscriptionManager>()
     private val subscriptionInfo = mockk<SubscriptionInfo>()
     private val sharedPreferencesManager = mockk<SharedPreferencesManager>(relaxed = true)
-    private val deviceManager = DeviceManager(context, sharedPreferencesManager)
+    private val contactManager = ContactManager(context, sharedPreferencesManager)
 
     @Test
     fun `device manager state is Uninitialized when created`() = runTest {
-        deviceManager.initializedState.test {
+        contactManager.initializedState.test {
             awaitItem().shouldBe(Initializable.Uninitialized)
         }
     }
@@ -40,10 +40,10 @@ class DeviceManagerTest {
         every { subscriptionManager.activeSubscriptionInfoList } returns listOf(subscriptionInfo)
 
         // When
-        deviceManager.initialize()
+        contactManager.initialize()
 
         // Then
-        deviceManager.initializedState.test {
+        contactManager.initializedState.test {
             awaitItem().shouldBe(Initializable.Initialized(Unit))
         }
     }
@@ -58,7 +58,7 @@ class DeviceManagerTest {
         every { subscriptionManager.activeSubscriptionInfoList } returns listOf(subscriptionInfo, subscriptionInfo2)
 
         // When
-        deviceManager.initialize()
+        contactManager.initialize()
 
         // Then
         verify { sharedPreferencesManager.setThisDeviceMainNumber("5555555555") }
@@ -72,10 +72,10 @@ class DeviceManagerTest {
         every { subscriptionManager.activeSubscriptionInfoList } returns listOf()
 
         // When
-        shouldThrow<IllegalStateException> { deviceManager.initialize() }
+        shouldThrow<IllegalStateException> { contactManager.initialize() }
 
         // Then
-        deviceManager.initializedState.test {
+        contactManager.initializedState.test {
             awaitItem().shouldBeInstanceOf<Initializable.Error>()
         }
     }
@@ -86,7 +86,7 @@ class DeviceManagerTest {
         every { sharedPreferencesManager.getAllDeviceNumbers() } returns listOf("5555555555", "1111111111")
 
         // When
-        val numbers = deviceManager.getThisDeviceNumbers()
+        val numbers = contactManager.getThisDeviceNumbers()
 
         // Then
         numbers.shouldBe(listOf("5555555555", "1111111111"))
@@ -98,7 +98,7 @@ class DeviceManagerTest {
         every { sharedPreferencesManager.getThisDeviceMainNumber() } returns "5555555555"
 
         // When
-        val mainNumber = deviceManager.getThisDeviceMainNumber()
+        val mainNumber = contactManager.getThisDeviceMainNumber()
 
         // Then
         mainNumber.shouldBe("5555555555")

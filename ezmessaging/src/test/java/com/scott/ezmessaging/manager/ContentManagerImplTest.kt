@@ -29,12 +29,12 @@ class ContentManagerImplTest {
 
     private val smsManager = mockk<SmsManager>(relaxed = true)
     private val mmsManager = mockk<MmsManager>(relaxed = true)
-    private val deviceManager = mockk<DeviceManager>(relaxed = true)
+    private val contactManager = mockk<ContactManager>(relaxed = true)
 
     private val contentManager = ContentManagerImpl(
         smsManager = smsManager,
         mmsManager = mmsManager,
-        deviceManager = deviceManager,
+        contactManager = contactManager,
         dispatcherProvider = MainCoroutineRule.dispatcherProvider
     )
 
@@ -46,7 +46,7 @@ class ContentManagerImplTest {
     @Test
     fun `initializedState is Uninitialized when the deviceManager is Uninitialized`() = runTest {
         // Given
-        every { deviceManager.initializedState } returns MutableStateFlow(Initializable.Uninitialized)
+        every { contactManager.initializedState } returns MutableStateFlow(Initializable.Uninitialized)
 
         // When
         contentManager.initialize()
@@ -61,7 +61,7 @@ class ContentManagerImplTest {
     fun `initializedState is Error when the deviceManager is Error`() = runTest {
         // Given
         val error = Initializable.Error(Throwable())
-        every { deviceManager.initializedState } returns MutableStateFlow(error)
+        every { contactManager.initializedState } returns MutableStateFlow(error)
 
         // When
         contentManager.initialize()
@@ -75,7 +75,7 @@ class ContentManagerImplTest {
     @Test
     fun `initializedState is Initialized when the deviceManager is Initialized`() = runTest {
         // Given
-        every { deviceManager.initializedState } returns MutableStateFlow(Initializable.Initialized(Unit))
+        every { contactManager.initializedState } returns MutableStateFlow(Initializable.Initialized(Unit))
 
         // When
         contentManager.initialize()
@@ -277,6 +277,18 @@ class ContentManagerImplTest {
 
         // Then
         messages.shouldBe(listOf(mmsMessages, smsMessages))
+    }
+
+    @Test
+    fun `getThisDeviceNumber returns main number from contact manager`() {
+        // Given
+        every { contactManager.getThisDeviceMainNumber() } returns "5555555555"
+
+        // When
+        val number = contentManager.getThisDeviceNumber()
+
+        // Then
+        number.shouldBe("5555555555")
     }
 
 }

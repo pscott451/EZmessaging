@@ -19,12 +19,12 @@ class MmsManagerTest {
 
     private val mmsContentResolver = mockk<MmsContentResolver>(relaxed = true)
     private val googleManager = mockk<GoogleManager>(relaxed = true)
-    private val deviceManager = mockk<DeviceManager>(relaxed = true)
+    private val contactManager = mockk<ContactManager>(relaxed = true)
 
     private val mmsManager = MmsManager(
         mmsContentResolver,
         googleManager,
-        deviceManager
+        contactManager
     )
 
     @Test
@@ -70,7 +70,7 @@ class MmsManagerTest {
         // Given
         val messageData = MessageData.Text("text")
         val recipients = arrayOf("1111111111")
-        every { deviceManager.getThisDeviceMainNumber() } returns "5555555555"
+        every { contactManager.getThisDeviceMainNumber() } returns "5555555555"
 
         // When
         mmsManager.sendMessage(messageData, recipients, {}, {})

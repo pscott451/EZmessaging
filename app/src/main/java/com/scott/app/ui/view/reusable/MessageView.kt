@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.scott.ezmessaging.manager.ContentManager
 import com.scott.ezmessaging.model.Message
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -26,6 +27,7 @@ fun MessageView(
     val dateFormat = SimpleDateFormat("MMM dd yyyy HH:mm:ss", Locale.getDefault())
     val date = Date(message.dateReceived)
     val formattedDate = dateFormat.format(date)
+    if (message is Message.MmsMessage && message.messageType == ContentManager.MessageTypes.CONTENT_APPLICATION_SMIL) return
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
@@ -50,7 +52,7 @@ fun MessageView(
         )
         when (message) {
             is Message.MmsMessage -> {
-                if (message.hasImage) {
+                if (message.messageType != ContentManager.MessageTypes.CONTENT_TYPE_TEXT) {
                     ShowMessageImage(
                         modifier = Modifier
                             .fillMaxWidth()

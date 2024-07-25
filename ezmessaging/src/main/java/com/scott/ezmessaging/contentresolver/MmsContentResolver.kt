@@ -10,13 +10,10 @@ import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.AfterDate
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ContainsTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ExactTextQuery
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
-import com.scott.ezmessaging.extension.asUSPhoneNumber
 import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.CONTENT_TYPE_TEXT
-import com.scott.ezmessaging.manager.ContentManager.SupportedMessageTypes.isValidMessageType
-import com.scott.ezmessaging.manager.DeviceManager
+import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.provider.DispatcherProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +30,7 @@ import kotlin.coroutines.suspendCoroutine
 internal class MmsContentResolver @Inject constructor(
     @ApplicationContext context: Context,
     dispatcherProvider: DispatcherProvider,
-    private val deviceManager: DeviceManager
+    private val contactManager: ContactManager
 ) {
 
     private val contentResolver: ContentResolver? = context.contentResolver
@@ -140,12 +137,12 @@ internal class MmsContentResolver @Inject constructor(
     }
 
     /**
-     * Finds a message by it's URI.
+     * Finds messages by it's URI.
      * @param messageUri the exact location the message should reside.
-     * @return The message if it exists. Otherwise, null
+     * @return The messages if they exists.
      */
-    fun findMessageByUri(messageUri: Uri?): MmsMessage? {
-        if (messageUri == null) return null
+    fun findMessagesByUri(messageUri: Uri?): List<MmsMessage> {
+        if (messageUri == null) return emptyList()
         runCatching {
             contentResolver.getCursor(
                 messageUri,
@@ -156,11 +153,11 @@ internal class MmsContentResolver @Inject constructor(
                     cursor.getColumnValue(COLUMN_MMS_ID)?.let { id ->
                         messages.addAll(findMessages(messageIds = setOf(id)))
                     }
-                    if (messages.isNotEmpty()) return messages.first()
+                    if (messages.isNotEmpty()) return messages
                 }
             }
         }
-        return null
+        return emptyList()
     }
 
     /**
@@ -289,8 +286,8 @@ internal class MmsContentResolver @Inject constructor(
             var messagesLoaded = 0f
             while (cursor.moveToNext()) {
                 val msgId = cursor.getColumnValue(COLUMN_MMS_MESSAGE_ID)
-                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS).asUSPhoneNumber()
-                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address.asUSPhoneNumber() else null
+                val address = cursor.getColumnValue(COLUMN_MMS_ADDRESS)
+                val senderAddress = if (cursor.getColumnValue(COLUMN_MMS_PARTICIPANT_TYPE) == PARTICIPANT_TYPE_FROM.toString()) address else null
 
                 msgId?.let { id ->
                     messageIdToAddresses[id]?.let {
@@ -349,9 +346,9 @@ internal class MmsContentResolver @Inject constructor(
                     type = type
                 )
 
-                if (mid != null && type.isValidMessageType()) {
-                    messageIdToContent[mid]?.add(content) ?: run {
-                        messageIdToContent[mid] = arrayListOf(content)
+                mid?.let {
+                    messageIdToContent[it]?.add(content) ?: run {
+                        messageIdToContent[it] = arrayListOf(content)
                     }
                     numberOfValidMessages++
                 }
@@ -451,17 +448,14 @@ internal class MmsContentResolver @Inject constructor(
         val threadId = threadId
         val messageId = messageId
         val uniqueId = uniqueId
-        val senderAddress = senderAddress.asUSPhoneNumber()
-        val dateSent = if (senderAddress == deviceManager.getThisDeviceMainNumber()) dateReceived else dateSent // date sent is the same as received if on this device
+        val senderAddress = senderAddress
+        val dateSent = if (senderAddress == contactManager.getThisDeviceMainNumber()) dateReceived else dateSent // date sent is the same as received if on this device
         val dateReceived = dateReceived
         val hasBeenRead = hasBeenRead
-        val participants = participants.mapNotNull { it.asUSPhoneNumber() }.toSet()
+        val participants = participants.mapNotNull { it }.toSet()
         val text = text
         val messageType = messageType
-        val hasImage = messageType != CONTENT_TYPE_TEXT
-        val hasText = !text.isNullOrEmpty()
-        val validContent = hasText || hasImage
-        return if (validContent && uniqueId != null && threadId != null && messageId != null &&
+        return if (uniqueId != null && threadId != null && messageId != null &&
             dateSent != null && dateReceived != null && hasBeenRead != null &&
             senderAddress != null && participants.isNotEmpty() && messageType != null
         ) {
@@ -475,7 +469,6 @@ internal class MmsContentResolver @Inject constructor(
                 dateSent = dateSent.convertDateToEpochMilliseconds() ?: 0,
                 dateReceived = dateReceived.convertDateToEpochMilliseconds() ?: 0,
                 hasBeenRead = hasBeenRead == "1",
-                hasImage = hasImage,
                 messageType = messageType,
                 participants = participants
             )
