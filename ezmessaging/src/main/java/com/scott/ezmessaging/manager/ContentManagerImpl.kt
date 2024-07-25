@@ -29,7 +29,7 @@ import kotlin.coroutines.suspendCoroutine
 internal class ContentManagerImpl(
     private val smsManager: SmsManager,
     private val mmsManager: MmsManager,
-    private val deviceManager: DeviceManager,
+    private val contactManager: ContactManager,
     dispatcherProvider: DispatcherProvider,
 ) : ContentManager {
 
@@ -40,10 +40,10 @@ internal class ContentManagerImpl(
 
     @RequiresPermission(Manifest.permission.READ_PHONE_STATE)
     override fun initialize() {
-        deviceManager.initializedState.onEach {
+        contactManager.initializedState.onEach {
             _initializedState.value = it
         }.launchIn(coroutineScope)
-        deviceManager.initialize()
+        contactManager.initialize()
     }
 
     override suspend fun getAllMessages(percentComplete: ((Float) -> Unit)?) = suspendCoroutine { continuation ->
@@ -142,6 +142,8 @@ internal class ContentManagerImpl(
             continuation.resume(mmsMessages.await() + smsMessages.await())
         }
     }
+
+    override fun getThisDeviceNumber() = contactManager.getThisDeviceMainNumber()
 
     private fun receiveSmsMessage(
         intent: Intent,

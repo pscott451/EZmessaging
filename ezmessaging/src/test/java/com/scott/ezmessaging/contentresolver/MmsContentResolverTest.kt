@@ -5,7 +5,7 @@ import android.content.Context
 import com.scott.ezmessaging.MainCoroutineRule
 import com.scott.ezmessaging.UnconfinedCoroutineRule
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.DeviceManager
+import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.model.Message
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -26,11 +26,11 @@ class MmsContentResolverTest {
     private val context = mockk<Context>(relaxed = true).also {
         every { it.contentResolver } returns contentResolver
     }
-    private val deviceManager = mockk<DeviceManager>().also {
+    private val contactManager = mockk<ContactManager>().also {
         every { it.getThisDeviceMainNumber() } returns "5555555555"
     }
 
-    private val mmsContentResolver = MmsContentResolver(context, MainCoroutineRule.dispatcherProvider, deviceManager)
+    private val mmsContentResolver = MmsContentResolver(context, MainCoroutineRule.dispatcherProvider, contactManager)
 
     @BeforeEach
     fun setup() {

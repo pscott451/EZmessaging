@@ -18,7 +18,7 @@ import javax.inject.Singleton
 internal class MmsManager @Inject constructor(
     private val mmsContentResolver: MmsContentResolver,
     private val googleManager: GoogleManager,
-    private val deviceManager: DeviceManager
+    private val contactManager: ContactManager
 ) {
 
     /**
@@ -90,7 +90,7 @@ internal class MmsManager @Inject constructor(
     ) {
         googleManager.sendMmsMessage(
             message = message,
-            fromAddress = deviceManager.getThisDeviceMainNumber(),
+            fromAddress = contactManager.getThisDeviceMainNumber(),
             recipients = recipients,
             onInsertedIntoDatabase = { location ->
                 onMessageCreated(mmsContentResolver.findMessagesByUri(location).find { it.messageType != ContentManager.MessageTypes.CONTENT_APPLICATION_SMIL })

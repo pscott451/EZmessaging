@@ -16,7 +16,7 @@ import javax.inject.Singleton
  * Must be initialized with a ComponentActivity.
  */
 @Singleton
-internal class DeviceManager @Inject constructor(
+internal class ContactManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val sharedPreferencesManager: SharedPreferencesManager
 ) {

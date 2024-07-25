@@ -12,7 +12,7 @@ import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.ExactText
 import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageIdsQuery
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.DeviceManager
+import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.model.Message.SmsMessage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -22,7 +22,7 @@ import javax.inject.Inject
  */
 internal class SmsContentResolver @Inject constructor(
     @ApplicationContext context: Context,
-    private val deviceManager: DeviceManager
+    private val contactManager: ContactManager
 ) {
 
     private val contentResolver: ContentResolver? = context.contentResolver
@@ -67,7 +67,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(address, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(address, contactManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -101,7 +101,7 @@ internal class SmsContentResolver @Inject constructor(
                     val body = cursor.getColumnValue(COLUMN_SMS_BODY)
 
                     // I don't care about messages that don't have all the required info so forcing unwrapping.
-                    val myAddress = deviceManager.getThisDeviceMainNumber()
+                    val myAddress = contactManager.getThisDeviceMainNumber()
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
@@ -110,7 +110,7 @@ internal class SmsContentResolver @Inject constructor(
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(sentToAddress!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(sentToAddress!!, contactManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }
@@ -238,12 +238,12 @@ internal class SmsContentResolver @Inject constructor(
                     message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = if (isOutbox) deviceManager.getThisDeviceMainNumber() else recipient!!,
+                        senderAddress = if (isOutbox) contactManager.getThisDeviceMainNumber() else recipient!!,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(recipient!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(recipient!!, contactManager.getThisDeviceMainNumber())
                     )
                 }.onFailure { logError(it) }
             }
@@ -287,12 +287,12 @@ internal class SmsContentResolver @Inject constructor(
                     val message = SmsMessage(
                         messageId = messageId!!,
                         threadId = threadId!!,
-                        senderAddress = if (uri == CONTENT_SMS_OUTBOX) deviceManager.getThisDeviceMainNumber() else recipient!!,
+                        senderAddress = if (uri == CONTENT_SMS_OUTBOX) contactManager.getThisDeviceMainNumber() else recipient!!,
                         text = text!!,
                         dateSent = dateSent!!.toLong(),
                         dateReceived = dateReceived!!.toLong(),
                         hasBeenRead = beenRead == "1",
-                        participants = setOf(recipient!!, deviceManager.getThisDeviceMainNumber())
+                        participants = setOf(recipient!!, contactManager.getThisDeviceMainNumber())
                     )
                     messages.add(message)
                 }.onFailure { logError(it) }

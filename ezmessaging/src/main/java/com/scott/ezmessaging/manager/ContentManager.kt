@@ -100,6 +100,11 @@ interface ContentManager {
         afterDateMillis: Long? = null
     ): List<Message>
 
+    /**
+     * @return The main number associated with this device.
+     */
+    fun getThisDeviceNumber(): String
+
     object MessageTypes {
         const val CONTENT_TYPE_JPEG = "image/jpeg"
         const val CONTENT_TYPE_JPG = "image/jpg"

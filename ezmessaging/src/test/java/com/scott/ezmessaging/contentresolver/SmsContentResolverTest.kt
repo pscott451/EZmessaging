@@ -3,7 +3,7 @@ package com.scott.ezmessaging.contentresolver
 import android.content.ContentResolver
 import android.content.Context
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.DeviceManager
+import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.model.Message
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -18,11 +18,11 @@ class SmsContentResolverTest {
     private val context = mockk<Context>(relaxed = true).also {
         every { it.contentResolver } returns contentResolver
     }
-    private val deviceManager = mockk<DeviceManager>().also {
+    private val contactManager = mockk<ContactManager>().also {
         every { it.getThisDeviceMainNumber() } returns "5555555555"
     }
 
-    private val smsContentResolver = SmsContentResolver(context, deviceManager)
+    private val smsContentResolver = SmsContentResolver(context, contactManager)
 
     @BeforeEach
     fun setup() {
