@@ -13,7 +13,6 @@ import com.scott.ezmessaging.contentresolver.MessageQueryBuilder.Query.MessageId
 import com.scott.ezmessaging.extension.convertDateToEpochMilliseconds
 import com.scott.ezmessaging.extension.getColumnValue
 import com.scott.ezmessaging.extension.getCursor
-import com.scott.ezmessaging.manager.ContactManager
 import com.scott.ezmessaging.model.Message.MmsMessage
 import com.scott.ezmessaging.provider.DispatcherProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,8 +28,7 @@ import kotlin.coroutines.suspendCoroutine
  */
 internal class MmsContentResolver @Inject constructor(
     @ApplicationContext context: Context,
-    dispatcherProvider: DispatcherProvider,
-    private val contactManager: ContactManager
+    dispatcherProvider: DispatcherProvider
 ) {
 
     private val contentResolver: ContentResolver? = context.contentResolver
@@ -449,7 +447,8 @@ internal class MmsContentResolver @Inject constructor(
         val messageId = messageId
         val uniqueId = uniqueId
         val senderAddress = senderAddress
-        val dateSent = if (senderAddress == contactManager.getThisDeviceMainNumber()) dateReceived else dateSent // date sent is the same as received if on this device
+        // If date sent is 0, it's an indication it was an outgoing message. Use dateReceived in this scenario
+        val dateSent = if (dateSent == "0") dateReceived else dateSent
         val dateReceived = dateReceived
         val hasBeenRead = hasBeenRead
         val participants = participants.mapNotNull { it }.toSet()
